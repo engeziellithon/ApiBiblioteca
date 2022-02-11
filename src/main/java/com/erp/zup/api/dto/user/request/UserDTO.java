@@ -1,28 +1,29 @@
-package com.erp.zup.api.VM;
+package com.erp.zup.api.dto.user.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 
 import javax.validation.constraints.*;
-import java.util.ArrayList;
 import java.util.List;
+
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserVM {
-
+public class UserDTO {
         @NotNull
         @Email
         public String email;
         @NotNull
         public String name;
-        @NotNull
+        @NotNull @JsonProperty(access = WRITE_ONLY)
         public String password;
         @NotEmpty
-        public List<RoleVM> roles = new ArrayList<>();
+        public List<RoleDTO> roles;
 }
 
 

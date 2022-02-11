@@ -1,13 +1,18 @@
 package com.erp.zup.api.controller;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.erp.zup.api.VM.AuthVM;
+import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
+import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.config.jwt.SecurityConfig;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,11 +27,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Authenticate user and update token")
 public class AuthController {
 
     @Autowired
@@ -38,21 +45,20 @@ public class AuthController {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @PostMapping
-    public Object auth(@Valid @RequestBody AuthVM auth, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity auth(@Valid @RequestBody AuthDTO auth, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-       UserDetails user = userService.AuthUserByEmail(auth.getEmail());
+       User user = userService.findUserByEmail(auth.getEmail());
 
-       if (user == null || (user != null && !passwordEncoder.matches(auth.getPassword(),user.getPassword()))){
-           Map<String, String> message = new HashMap<>() {{
+       if (user == null || (!passwordEncoder.matches(auth.getPassword(),user.getPassword()))) {
+           var message = new HashMap<>() {{
                put("message", "User not found or password incorrect.");
            }};
-           return message;
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
        }
 
-        Map<String, String> tokens = security.GenerateToken(user.getUsername(),
-                user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()), request, response, null);
-
-        return tokens;
+        return ResponseEntity.ok(security.GenerateToken(user.getEmail(),
+                user.getRoles().stream().map(Role::getName).collect(Collectors.toList()),
+                request, response, null));
     }
 
     @GetMapping("/refreshToken")
@@ -64,16 +70,17 @@ public class AuthController {
                     String token = authorizationHeader.substring("Bearer ".length());
                     DecodedJWT decodedJWT = security.DecodedToken(authorizationHeader);
 
-                    User user = userService.GetUsersByEmail(decodedJWT.getSubject());
+                    User user = userService.findUserByEmail(decodedJWT.getSubject());
 
-                    Map<String, String> tokens = security.GenerateToken(user.getName(), user.getRoles().stream().map(Role::getName).collect(Collectors.toList()), request, response, token);
+                    AuthResponseDTO tokens = security.GenerateToken(user.getName(), user.getRoles().stream().map(Role::getName).collect(Collectors.toList()), request, response, token);
 
                     new ObjectMapper().writeValue(response.getOutputStream(),tokens);
 
                 } catch (Exception e) {
                     response.setStatus(FORBIDDEN.value());
                 }
-            } else {
+            }
+            else {
                 response.setStatus(FORBIDDEN.value());
                 Map<String, String> message = new HashMap<>() {{
                     put("message", "Refresh token is missing");
@@ -83,7 +90,7 @@ public class AuthController {
             }
         }
         catch (Exception ex) {
-            response.setStatus(FORBIDDEN.value());
+            response.setStatus(BAD_REQUEST.value());
         }
     }
 }

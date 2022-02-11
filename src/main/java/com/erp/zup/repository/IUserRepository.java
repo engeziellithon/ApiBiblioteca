@@ -1,7 +1,5 @@
 package com.erp.zup.repository;
 
-import java.util.List;
-
 import com.erp.zup.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

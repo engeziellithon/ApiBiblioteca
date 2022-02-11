@@ -1,4 +1,4 @@
-package com.erp.zup.api.VM;
+package com.erp.zup.api.dto.auth.request;
 
 import lombok.*;
 
@@ -6,10 +6,11 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 
 
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-public class AuthVM {
+public class AuthDTO {
     @NotNull
     @Email(message = "Necessário um email válido")
     public String email;

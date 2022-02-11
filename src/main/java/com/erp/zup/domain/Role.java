@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -12,8 +13,13 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "roles")
 public class Role extends BaseEntity {
+
+    @Column(unique=true)
     private String name;
+
+    public Role(String name) {
+        this.name = name;
+    }
 }

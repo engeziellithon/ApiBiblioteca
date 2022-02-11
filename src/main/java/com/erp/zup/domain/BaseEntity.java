@@ -1,12 +1,14 @@
 package com.erp.zup.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jflunt.notifications.Notifiable;
 
 import javax.persistence.*;
 import java.time.OffsetDateTime;
 
+
 @MappedSuperclass
-public abstract class BaseEntity {
+public abstract class BaseEntity extends Notifiable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -21,6 +23,8 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private OffsetDateTime lastUpdated;
 
+
+
     @PrePersist
     public void prePersist(){
         dateCreated = OffsetDateTime.now();
@@ -32,9 +36,6 @@ public abstract class BaseEntity {
         lastUpdated = OffsetDateTime.now();
     }
 
-    public BaseEntity(){
-
-    }
 
     public Long getId() {
         return id;
@@ -42,22 +43,5 @@ public abstract class BaseEntity {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-
-    public OffsetDateTime getLastUpdated() {
-        return lastUpdated;
-    }
-
-    public void setLastUpdated(OffsetDateTime lastUpdated) {
-        this.lastUpdated = lastUpdated;
-    }
-
-    public void setDateCreated(OffsetDateTime dateCreated) {
-        this.dateCreated = dateCreated;
-    }
-
-    public OffsetDateTime getDateCreated() {
-        return dateCreated;
     }
 }

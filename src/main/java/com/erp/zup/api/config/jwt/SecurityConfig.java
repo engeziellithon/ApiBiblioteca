@@ -5,6 +5,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
+import com.erp.zup.domain.User;
 import com.erp.zup.service.user.IUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,10 +30,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
@@ -48,7 +48,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userDetailsService = new UserDetailsService() {
         @Override
         public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-            return userService.AuthUserByEmail(email);
+            User user = userService.findUserByEmail(email);
+
+            Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            user.getRoles().forEach(role -> {
+                authorities.add(new SimpleGrantedAuthority(role.getName()));
+            });
+
+            return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
         }
     };
 
@@ -78,14 +85,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return super.authenticationManagerBean();
     }
 
-    public Map<String, String> GenerateToken(String username, List<String> listRoles, HttpServletRequest request, HttpServletResponse response, String refresh_token) throws IOException {
+    public AuthResponseDTO GenerateToken(String username, List<String> listRoles, HttpServletRequest request, HttpServletResponse response, String refresh_token) throws IOException {
 
         Algorithm algorithm = Algorithm.HMAC256("Secret".getBytes());
 
         String access_token =
                 JWT.create()
                         .withSubject(username)
-                        .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+                        .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
                         .withIssuer(request.getRequestURI())
                         .withClaim("roles", listRoles)
                         .sign(algorithm);
@@ -94,19 +101,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 ? refresh_token.trim()
                 : JWT.create()
                 .withSubject(username)
-                .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000))
                 .withIssuer(request.getRequestURI())
                 .sign(algorithm);
 
 
-        Map<String, String> tokens = new HashMap<>() {{
-            put("access_token", access_token);
-            put("refresh_token", refreshtoken);
-        }};
-
         response.setContentType(APPLICATION_JSON_VALUE);
 
-        return tokens;
+        return new AuthResponseDTO(access_token,refreshtoken);
     }
 
     public DecodedJWT DecodedToken(String token) {
