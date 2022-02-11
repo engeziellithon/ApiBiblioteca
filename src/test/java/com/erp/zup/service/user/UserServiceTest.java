@@ -1,11 +1,7 @@
 package com.erp.zup.service.user;
 
-import com.erp.zup.api.config.mapper.MapperUtil;
-import com.erp.zup.api.dto.user.request.RoleDTO;
-import com.erp.zup.api.dto.user.request.UserDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
-import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.repository.IUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,10 +27,10 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class UserServiceTest {
 
-    private static final Long ID      = 1L;
-    private static final Integer INDEX   = 0;
-    private static final String NAME     = "user";
-    private static final String EMAIL    = "user@user.com";
+    private static final Long ID = 1L;
+    private static final Integer INDEX = 0;
+    private static final String NAME = "user";
+    private static final String EMAIL = "user@user.com";
     private static final String PASSWORD = "password";
     private static final String ROLE = "User";
 
@@ -44,14 +40,9 @@ class UserServiceTest {
     @Mock
     private IUserRepository repository;
 
-    @Mock
-    private IRoleRepository roleRepo;
-
-    private MapperUtil mapper;
-
     private User user;
-    private UserDTO userVM;
-    private Optional<User> optionalUser;
+    private final Optional<User> optionalUser = Optional.of(new User(ID, NAME, EMAIL, PASSWORD, List.of(new Role(ROLE))));
+
 
     @BeforeEach
     void setUp() {
@@ -60,9 +51,9 @@ class UserServiceTest {
     }
 
     void start() {
-        user = new User(ID,NAME, EMAIL, PASSWORD, List.of(new Role(ROLE)));
-        userVM = new UserDTO(EMAIL, NAME, PASSWORD, List.of(new RoleDTO(ROLE)));
-        optionalUser = Optional.of(new User(ID,NAME, EMAIL, PASSWORD, List.of(new Role(ROLE))));
+        user = new User(ID, NAME, EMAIL, PASSWORD, List.of(new Role(ROLE)));
+        //UserRequestDTO userVM = new UserRequestDTO(EMAIL, NAME, PASSWORD, List.of(new RoleRequestDTO(ROLE)));
+
     }
 
     @Test
@@ -85,11 +76,9 @@ class UserServiceTest {
         when(repository.findById(anyLong()))
                 .thenReturn(null);
 
-        try{
-            service.findById(ID);
-        } catch (Exception ex) {
 
-        }
+        service.findById(ID);
+
     }
 
     @Test
@@ -125,27 +114,16 @@ class UserServiceTest {
     @Test
     void whenCreateThenReturnAnDataIntegrityViolationException() {
         when(repository.findByEmailIgnoreCase(anyString())).thenReturn(user);
-
-        try{
-            optionalUser.get().setId(2L);
-            service.create(user);
-        } catch (Exception ex) {
-
-        }
+        optionalUser.ifPresent(value -> value.setId(2L));
+        service.create(user);
     }
-
 
 
     @Test
     void whenUpdateThenReturnAnDataIntegrityViolationException() {
         when(repository.findByEmailIgnoreCase(anyString())).thenReturn(user);
-
-        try{
-            optionalUser.get().setId(2L);
-            service.create(user);
-        } catch (Exception ex) {
-
-        }
+        optionalUser.ifPresent(value -> value.setId(2L));
+        service.create(user);
     }
 
     @Test
@@ -160,17 +138,14 @@ class UserServiceTest {
     void whenDeleteThenReturnObjectNotFoundException() {
         when(repository.findById(anyLong()))
                 .thenReturn(Optional.ofNullable(user));
-        try {
-            service.delete(ID);
-        } catch (Exception ex) {
 
-        }
+        service.delete(ID);
+
     }
 
     @Test
     void whenUpdateThenReturnSuccess() {
         when(repository.save(any())).thenReturn(user);
-        start();
         User response = service.update(user);
 
         assertNotNull(response);

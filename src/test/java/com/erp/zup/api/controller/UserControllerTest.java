@@ -1,8 +1,9 @@
 package com.erp.zup.api.controller;
 
 import com.erp.zup.api.config.mapper.MapperUtil;
-import com.erp.zup.api.dto.user.request.RoleDTO;
-import com.erp.zup.api.dto.user.request.UserDTO;
+import com.erp.zup.api.dto.user.request.RoleRequestDTO;
+import com.erp.zup.api.dto.user.request.UserRequestDTO;
+import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.UserService;
@@ -33,10 +34,10 @@ class UserControllerTest {
     private static final String NAME     = "user";
     private static final String EMAIL    = "user@user.com";
     private static final String PASSWORD = "password";
-    private static String ROLE = "User";
 
     private User user = new User();
-    private UserDTO userDTO = new UserDTO();
+    private UserRequestDTO userDTO = new UserRequestDTO();
+    private UserUpdateRequestDTO userUpdateRequestDTO = new UserUpdateRequestDTO();
 
     @InjectMocks
     private UserController controller;
@@ -57,12 +58,12 @@ class UserControllerTest {
         when(service.findById(anyLong())).thenReturn(user);
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
-        ResponseEntity<UserDTO> response = controller.findById(ID);
+        ResponseEntity<UserRequestDTO> response = controller.findById(ID);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(ResponseEntity.class, response.getClass());
-        assertEquals(UserDTO.class, response.getBody().getClass());
+        assertEquals(UserRequestDTO.class, response.getBody().getClass());
 
         //assertEquals(ID, response.getBody().getId());
         assertEquals(NAME, response.getBody().getName());
@@ -75,14 +76,14 @@ class UserControllerTest {
         when(service.findAll(Mockito.any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(user)));
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
-        ResponseEntity<List<UserDTO>> response = controller.findAll(Pageable.ofSize(1));
+        ResponseEntity<List<UserRequestDTO>> response = controller.findAll(Pageable.ofSize(1));
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(ArrayList.class, response.getBody().getClass());
-        assertEquals(UserDTO.class, response.getBody().get(INDEX).getClass());
+        assertEquals(UserRequestDTO.class, response.getBody().get(INDEX).getClass());
 
         //assertEquals(ID, response.getBody().get(INDEX).getId());
         assertEquals(NAME, response.getBody().get(INDEX).getName());
@@ -94,7 +95,7 @@ class UserControllerTest {
     void whenCreateThenReturnCreated() {
         when(service.create(any())).thenReturn(user);
 
-        ResponseEntity<UserDTO> response = controller.create(userDTO);
+        ResponseEntity<UserRequestDTO> response = controller.create(userDTO);
 
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -106,13 +107,13 @@ class UserControllerTest {
         when(service.update(user)).thenReturn(user);
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
-        ResponseEntity<UserDTO> response = controller.update(ID, userDTO);
+        ResponseEntity<UserRequestDTO> response = controller.update(ID, userUpdateRequestDTO);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(ResponseEntity.class, response.getClass());
-        assertEquals(UserDTO.class, response.getBody().getClass());
+        assertEquals(UserRequestDTO.class, response.getBody().getClass());
 
         //assertEquals(ID, response.getBody().get);
         assertEquals(NAME, response.getBody().getName());
@@ -123,7 +124,7 @@ class UserControllerTest {
     void whenDeleteThenReturnSuccess() {
         doNothing().when(service).delete(anyLong());
 
-        ResponseEntity<UserDTO> response = controller.delete(ID);
+        ResponseEntity<UserRequestDTO> response = controller.delete(ID);
 
         assertNotNull(response);
         assertEquals(ResponseEntity.class, response.getClass());
@@ -132,8 +133,10 @@ class UserControllerTest {
     }
 
     private void startUser() {
+        String ROLE = "User";
         user = new User(ID, NAME, EMAIL,  PASSWORD,List.of(new Role(ROLE)));
-        userDTO = new UserDTO(NAME, EMAIL, PASSWORD,List.of(new RoleDTO(ROLE)));
+        userDTO = new UserRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
+        userUpdateRequestDTO = new UserUpdateRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
         mapper = new MapperUtil();
     }
 }

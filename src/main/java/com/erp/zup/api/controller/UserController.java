@@ -1,7 +1,8 @@
 package com.erp.zup.api.controller;
 
 import com.erp.zup.api.config.mapper.MapperUtil;
-import com.erp.zup.api.dto.user.request.UserDTO;
+import com.erp.zup.api.dto.user.request.UserRequestDTO;
+import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/user")
+@Tag(name = "User", description = "Authenticate user and update token")
 public class UserController {
 
     @Autowired
@@ -38,30 +41,30 @@ public class UserController {
 
 
     @GetMapping(value = ID)
-    public ResponseEntity<UserDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok().body(mapper.map(service.findById(id), UserDTO.class));
+    public ResponseEntity<UserRequestDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok().body(mapper.map(service.findById(id), UserRequestDTO.class));
     }
 
 
     @Operation(summary = "Get all user by filter", responses = {
-            @ApiResponse(description = "Successful Operation", responseCode = "200",content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserDTO.class)))),
+            @ApiResponse(description = "Successful Operation", responseCode = "200",content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserRequestDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content),
             @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content),
             @ApiResponse(responseCode = "401", description = "Authentication Failure", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<List<UserDTO>> findAll(@PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+    public ResponseEntity<List<UserRequestDTO>> findAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<User> listUsers = service.findAll(pageable);
 
         if (listUsers == null)
             return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok().body(listUsers
-                .stream().map(x -> mapper.map(x, UserDTO.class)).collect(Collectors.toList()));
+                .stream().map(x -> mapper.map(x, UserRequestDTO.class)).collect(Collectors.toList()));
     }
 
     @PostMapping
-    public ResponseEntity<UserDTO> create(@RequestBody @Valid UserDTO obj) {
+    public ResponseEntity<UserRequestDTO> create(@RequestBody @Valid UserRequestDTO obj) {
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest().path(ID).buildAndExpand(service.create(mapper.map(obj, User.class)).getId()).toUri();
 
@@ -69,14 +72,14 @@ public class UserController {
     }
 
     @PutMapping(value = ID)
-    public ResponseEntity<UserDTO> update(@PathVariable Long id, @RequestBody @Valid UserDTO obj) {
+    public ResponseEntity<UserRequestDTO> update(@PathVariable Long id, @RequestBody @Valid UserUpdateRequestDTO obj) {
         var userEntity = mapper.map(obj, User.class);
         userEntity.setId(id);
-        return ResponseEntity.ok().body(mapper.map(service.update(userEntity), UserDTO.class));
+        return ResponseEntity.ok().body(mapper.map(service.update(userEntity), UserRequestDTO.class));
     }
 
     @DeleteMapping(value = ID)
-    public ResponseEntity<UserDTO> delete(@PathVariable Long id) {
+    public ResponseEntity<UserRequestDTO> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

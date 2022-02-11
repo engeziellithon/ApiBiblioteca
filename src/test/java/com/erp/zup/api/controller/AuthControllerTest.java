@@ -1,81 +1,133 @@
 package com.erp.zup.api.controller;
 
-import com.erp.zup.api.config.mapper.MapperUtil;
+import com.auth0.jwt.JWT;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
-import com.erp.zup.api.dto.user.request.RoleDTO;
-import com.erp.zup.api.dto.user.request.UserDTO;
+import com.erp.zup.api.dto.user.request.RoleRequestDTO;
+import com.erp.zup.api.dto.user.request.UserRequestDTO;
+import com.erp.zup.domain.Role;
+import com.erp.zup.domain.User;
+import com.erp.zup.service.AuthService.AuthService;
 import com.erp.zup.service.user.UserService;
+import jflunt.notifications.Notifiable;
+import jflunt.notifications.Notification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.mockito.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AuthControllerTest {
+    private static final Long ID         = 1L;
     private static final String NAME     = "user";
     private static final String EMAIL    = "user@user.com";
     private static final String PASSWORD = "password";
-    private static final String ROLE = "User";
+    private static final String ROLE     = "User";
+    private static final String Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
-    private UserDTO userDTO;
+    private User user;
     private AuthDTO authDTO;
-    private UserDetails userDetails;
     private AuthResponseDTO authResponseDTO;
 
     @InjectMocks
     private AuthController controller;
 
-    private MockMvc mockMvc;
+    @Mock
+    private JWT jwt;
 
     @Mock
     private UserService service;
 
-    private MapperUtil mapper;
+    @Mock
+    private AuthService authService;
+
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         startUser();
     }
 
     private void startUser() {
-        userDTO = new UserDTO(NAME, EMAIL, PASSWORD,List.of(new RoleDTO(ROLE)));
+        UserRequestDTO userDTO = new UserRequestDTO(NAME, EMAIL, PASSWORD, List.of(new RoleRequestDTO(ROLE)));
         authDTO = new AuthDTO(EMAIL, PASSWORD);
+        user = new User(ID,NAME, EMAIL, PASSWORD,List.of(new Role(ROLE)));
+        passwordEncoder = new BCryptPasswordEncoder();
+        authResponseDTO = new AuthResponseDTO(Token,Token);
     }
 
     @Test
-    void whenAuthThenReturnSuccess() throws Exception {
+    void whenAuthThenReturnSuccess() {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        when(service.findUserByEmail(anyString())).thenReturn(user);
+        when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 
-        mockMvc.perform(post("/api/auth")
-                        .contentType(APPLICATION_JSON)
-                        .content("{\n" +
-                                "  \"email\": \"user@user.com\",\n" +
-                                "  \"password\": \"password\"\n" +
-                                "}")
-                        .accept(APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk());
+        ResponseEntity<AuthResponseDTO> response = controller.auth(authDTO,new MockHttpServletRequest());
+
+
+
+        assertNotNull(response);
+        assertNotNull(response.getBody());
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(AuthResponseDTO.class, response.getBody().getClass());
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertEquals(Token, response.getBody().accessToken);
+        assertEquals(Token, response.getBody().refreshToken);
+        assertThat(Token,containsString("."));
     }
 
     @Test
-    void whenAuthThenReturnNotFound() {
+    void whenAuthWithIncorrectPasswordThenReturnNotFound() {
+        when(service.findUserByEmail(anyString())).thenReturn(user);
+        when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 
+        ResponseEntity<List<Notification>> response = controller.auth(authDTO,new MockHttpServletRequest());
+
+        assertNotNull(response);
+        assertNotNull(response.getBody());
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
+        assertEquals("User", response.getBody().get(0).getProperty());
+        assertEquals("User not found or password incorrect.", response.getBody().get(0).getMessage());
     }
+
+    @Test
+    void whenSendAnNotExistingEmailThenReturnNotFound()  {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        when(service.findUserByEmail(anyString())).thenReturn(null);
+        when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
+
+
+        ResponseEntity<List<Notification>> response = controller.auth(authDTO,new MockHttpServletRequest());
+
+        assertNotNull(response);
+        assertNotNull(response.getBody());
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
+        assertEquals("User", response.getBody().get(0).getProperty());
+        assertEquals("User not found or password incorrect.", response.getBody().get(0).getMessage());
+    }
+
+
 
     @Test
     void refreshToken() {

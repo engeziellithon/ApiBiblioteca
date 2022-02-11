@@ -1,7 +1,7 @@
 package com.erp.zup.api.dto.user.response;
 
 import com.erp.zup.api.dto.BaseDTO;
-import com.erp.zup.api.dto.user.request.RoleDTO;
+import com.erp.zup.api.dto.user.request.RoleRequestDTO;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -14,5 +14,5 @@ import java.util.List;
 public class UserResponseDTO extends BaseDTO {
     public String email;
     public String name;
-    public List<RoleDTO> roles;
+    public List<RoleRequestDTO> roles;
 }

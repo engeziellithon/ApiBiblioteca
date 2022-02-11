@@ -8,7 +8,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.IUserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -27,12 +26,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 
@@ -51,9 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             User user = userService.findUserByEmail(email);
 
             Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            user.getRoles().forEach(role -> {
-                authorities.add(new SimpleGrantedAuthority(role.getName()));
-            });
+            user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName())));
 
             return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
         }
@@ -85,40 +82,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return super.authenticationManagerBean();
     }
 
-    public AuthResponseDTO GenerateToken(String username, List<String> listRoles, HttpServletRequest request, HttpServletResponse response, String refresh_token) throws IOException {
 
-        Algorithm algorithm = Algorithm.HMAC256("Secret".getBytes());
-
-        String access_token =
-                JWT.create()
-                        .withSubject(username)
-                        .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
-                        .withIssuer(request.getRequestURI())
-                        .withClaim("roles", listRoles)
-                        .sign(algorithm);
-
-        String refreshtoken = refresh_token != null && !refresh_token.trim().isEmpty()
-                ? refresh_token.trim()
-                : JWT.create()
-                .withSubject(username)
-                .withExpiresAt(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000))
-                .withIssuer(request.getRequestURI())
-                .sign(algorithm);
-
-
-        response.setContentType(APPLICATION_JSON_VALUE);
-
-        return new AuthResponseDTO(access_token,refreshtoken);
-    }
-
-    public DecodedJWT DecodedToken(String token) {
-        token = token.substring("Bearer ".length());
-        Algorithm algorithm = Algorithm.HMAC256("Secret".getBytes());
-        JWTVerifier verifier = JWT.require(algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(token);
-
-        return decodedJWT;
-    }
 }
 
 

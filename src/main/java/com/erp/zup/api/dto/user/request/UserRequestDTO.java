@@ -14,7 +14,7 @@ import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserDTO {
+public class UserRequestDTO {
         @NotNull
         @Email
         public String email;
@@ -23,7 +23,7 @@ public class UserDTO {
         @NotNull @JsonProperty(access = WRITE_ONLY)
         public String password;
         @NotEmpty
-        public List<RoleDTO> roles;
+        public List<RoleRequestDTO> roles;
 }
 
 
