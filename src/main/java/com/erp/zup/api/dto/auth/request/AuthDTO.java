@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 public class AuthDTO {

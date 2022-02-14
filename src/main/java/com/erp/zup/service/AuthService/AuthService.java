@@ -3,6 +3,7 @@ package com.erp.zup.service.AuthService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import org.springframework.stereotype.Service;
@@ -36,10 +37,17 @@ public class AuthService {
         return new AuthResponseDTO(access_token,refresh_token);
     }
 
-    public DecodedJWT DecodedToken(String token) {
-        token = token.substring("Bearer ".length());
-        JWTVerifier verifier = JWT.require(Algorithm.HMAC256("Secret".getBytes())).build();
+    public String DecodedToken(String token) {
+        try{
+            token = token.substring("Bearer ".length());
+            JWTVerifier verifier = JWT.require(Algorithm.HMAC256("Secret".getBytes())).build();
 
-        return verifier.verify(token);
+            DecodedJWT decodedJWT = verifier.verify(token);
+
+            return decodedJWT.getSubject();
+        }
+        catch (Exception exception) {
+            return null;
+        }
     }
 }
