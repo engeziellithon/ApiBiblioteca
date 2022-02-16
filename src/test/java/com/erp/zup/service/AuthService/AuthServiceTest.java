@@ -5,6 +5,7 @@ import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
+import jflunt.notifications.Notification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -71,11 +72,14 @@ class AuthServiceTest {
     void whenCallGenerateTokenReturnNotifications() {
         AuthResponseDTO response = authService.GenerateToken("",null,"","");
 
+        List<Notification> notifications = authService.getNotifications();
+
         assertNull(response);
-        assertEquals("Email", authService.getNotifications().get(0).getProperty());
-        assertEquals("Necessário um email válido.", authService.getNotifications().get(0).getMessage());
-        assertEquals("Roles", authService.getNotifications().get(1).getProperty());
-        assertEquals("Necessário informar as funções do usuário.", authService.getNotifications().get(1).getMessage());
+
+        assertEquals("Email", notifications.get(0).getProperty());
+        assertEquals("Necessário um email válido.", notifications.get(0).getMessage());
+        assertEquals("Roles", notifications.get(1).getProperty());
+        assertEquals("Necessário informar as funções do usuário.", notifications.get(1).getMessage());
     }
 
     @Test
@@ -96,20 +100,23 @@ class AuthServiceTest {
 
         String response = authService.DecodedToken(null);
 
+        List<Notification> notifications = authService.getNotifications();
+
         assertNull(response);
-        assertEquals("Token", authService.getNotifications().get(0).getProperty());
-        assertEquals("Necessário um token", authService.getNotifications().get(0).getMessage());
+        assertEquals("Token", notifications.get(0).getProperty());
+        assertEquals("Necessário um token", notifications.get(0).getMessage());
     }
 
 
     @Test
     void whenCallDecodedTokenIncorrectTokenParameterReturnNotifications() {
-        //when(authServiceMock.DecodedToken(null)).thenReturn(null);
         String response = authService.DecodedToken("teste");
 
+        List<Notification> notifications = authService.getNotifications();
+
         assertNull(response);
-        assertEquals("Token", authService.getNotifications().get(0).getProperty());
-        assertEquals("Token expirado", authService.getNotifications().get(0).getMessage());
+        assertEquals("Token", notifications.get(0).getProperty());
+        assertEquals("Token expirado", notifications.get(0).getMessage());
     }
 
 

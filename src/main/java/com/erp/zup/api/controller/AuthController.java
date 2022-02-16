@@ -1,22 +1,25 @@
 package com.erp.zup.api.controller;
 
+import com.erp.zup.api.NotificationValidate;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
+import com.erp.zup.domain.BaseEntity;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
+import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.service.AuthService.AuthService;
 import com.erp.zup.service.user.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jflunt.notifications.Notifiable;
+import jflunt.notifications.Notification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -35,17 +38,15 @@ public class AuthController extends Notifiable {
 
 
     @PostMapping
-    public ResponseEntity auth(@Valid @RequestBody AuthDTO auth, HttpServletRequest request) {
-        User user = userService.findUserByEmail(auth.getEmail());
+    public ResponseEntity auth(@RequestBody @Valid AuthDTO auth) {
 
-        if (user == null || (!new BCryptPasswordEncoder().matches(auth.getPassword(), user.getPassword()))) {
-            addNotification("User", "Usuário não encontrado ou senha incorreta.");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(getNotifications());
-        }
+        User user = userService.findUserByEmail(auth.getEmail());
+        if (user == null || user.CheckPasswordMatch(auth.getPassword()))
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of(new Notification("User", "Usuário não encontrado ou senha incorreta.")));;
 
         AuthResponseDTO token = authService.GenerateToken(user.getEmail(), user.getRoles().stream().map(Role::getName).collect(Collectors.toList()), "/api/auth", "");
 
-        return ResponseEntity.ok(token);
+        return authService.getNotifications().isEmpty() ?  ResponseEntity.ok(token) : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(authService.getNotifications());
     }
 
     @GetMapping("/refreshToken")

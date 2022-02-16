@@ -1,5 +1,6 @@
 package com.erp.zup.api.controller;
 
+import com.erp.zup.api.NotificationValidate;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
@@ -18,6 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -48,6 +50,8 @@ class AuthControllerTest {
     @Mock
     private AuthService authService;
 
+    @Mock
+    private NotificationValidate validate;
 
     @BeforeEach
     void setUp() {
@@ -66,9 +70,9 @@ class AuthControllerTest {
     void whenAuthThenReturnSuccess() {
         user.EncodePassword(user.getPassword());
         when(service.findUserByEmail(anyString())).thenReturn(user);
-        when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
+        when(authService.GenerateToken(anyString(), any(),anyString(),anyString())).thenReturn(authResponseDTO);
 
-        ResponseEntity<AuthResponseDTO> response = controller.auth(authDTO,new MockHttpServletRequest());
+        ResponseEntity<AuthResponseDTO> response = controller.auth(authDTO);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
@@ -82,10 +86,9 @@ class AuthControllerTest {
 
     @Test
     void whenAuthWithIncorrectPasswordThenReturnNotFound() {
-        when(service.findUserByEmail(anyString())).thenReturn(user);
-        when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
-
-        ResponseEntity<List<Notification>> response = controller.auth(authDTO,new MockHttpServletRequest());
+        when(service.findUserByEmail(anyString())).thenReturn(null);
+        when(authService.GenerateToken(anyString(), any(), any(), any())).thenReturn(authResponseDTO);
+        ResponseEntity<List<Notification>> response = controller.auth(authDTO);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
@@ -102,7 +105,7 @@ class AuthControllerTest {
         when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 
 
-        ResponseEntity<List<Notification>> response = controller.auth(authDTO,new MockHttpServletRequest());
+        ResponseEntity<List<Notification>> response = controller.auth(authDTO);
 
         assertNotNull(response);
         assertNotNull(response.getBody());

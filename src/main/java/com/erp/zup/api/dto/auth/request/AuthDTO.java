@@ -3,6 +3,7 @@ package com.erp.zup.api.dto.auth.request;
 import lombok.*;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 
@@ -10,9 +11,8 @@ import javax.validation.constraints.NotNull;
 @Getter
 @Setter
 public class AuthDTO {
-    @NotNull
-    @Email(message = "Necessário um email válido")
+    @NotEmpty  @NotNull  @Email(message = "Necessário um email válido")
     public String email;
-    @NotNull
+    @NotEmpty   @NotNull
     public String password;
 }

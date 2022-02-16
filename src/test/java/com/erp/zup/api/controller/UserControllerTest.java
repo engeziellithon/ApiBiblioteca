@@ -1,6 +1,7 @@
 package com.erp.zup.api.controller;
 
 import com.erp.zup.api.config.mapper.MapperUtil;
+import com.erp.zup.api.dto.pagination.PaginationDTO;
 import com.erp.zup.api.dto.user.request.RoleRequestDTO;
 import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
@@ -38,10 +39,12 @@ class UserControllerTest {
     private static final String NAME     = "user";
     private static final String EMAIL    = "user@user.com";
     private static final String PASSWORD = "password";
+    private static final Integer PaginationValue = 1;
 
-    private User user = new User();
-    private UserRequestDTO userDTO = new UserRequestDTO();
-    private UserUpdateRequestDTO userUpdateRequestDTO = new UserUpdateRequestDTO();
+    private User user;
+    private UserRequestDTO userDTO;
+    private UserUpdateRequestDTO userUpdateRequestDTO;
+    private PaginationDTO<UserRequestDTO> paginationDTO;
 
     @InjectMocks
     private UserController controller;
@@ -60,7 +63,8 @@ class UserControllerTest {
 
     private void startUser() {
         String ROLE = "User";
-        user = new User(ID, NAME, EMAIL,  PASSWORD,List.of(new Role(ROLE)));
+
+        user = new User(ID, NAME, EMAIL,  PASSWORD, List.of(new Role(ROLE)));
         userDTO = new UserRequestDTO(EMAIL, NAME, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
         userUpdateRequestDTO = new UserUpdateRequestDTO(EMAIL, NAME, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
     }
@@ -77,7 +81,6 @@ class UserControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(UserRequestDTO.class, response.getBody().getClass());
 
-        //assertEquals(ID, response.getBody().getId());
         assertEquals(NAME, response.getBody().getName());
         assertEquals(EMAIL, response.getBody().getEmail());
         assertEquals(PASSWORD, response.getBody().getPassword());
@@ -87,21 +90,22 @@ class UserControllerTest {
     @Test
     void whenFindAllThenReturnAListOfUserDTO() {
         when(service.findAll(Mockito.any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(user)));
-        when(mapper.map(any(), any())).thenReturn(userDTO);
+        when(mapper.mapToGenericPagination(any(), any())).thenReturn(new PaginationDTO<>(PaginationValue, PaginationValue, PaginationValue,PaginationValue, List.of(userDTO)));
 
-        ResponseEntity<List<UserRequestDTO>> response = controller.findAll(Pageable.ofSize(1));
+
+        ResponseEntity<PaginationDTO<UserRequestDTO>> response = controller.findAll(Pageable.ofSize(1));
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(ResponseEntity.class, response.getClass());
-        assertEquals(ArrayList.class, response.getBody().getClass());
-        assertEquals(UserRequestDTO.class, response.getBody().get(INDEX).getClass());
+        assertEquals(new PaginationDTO<UserRequestDTO>().getClass(), response.getBody().getClass());
 
-        //assertEquals(ID, response.getBody().get(INDEX).getId());
-        assertEquals(NAME, response.getBody().get(INDEX).getName());
-        assertEquals(EMAIL, response.getBody().get(INDEX).getEmail());
-        assertEquals(PASSWORD, response.getBody().get(INDEX).getPassword());
+        assertEquals(PaginationValue, response.getBody().getNumber());
+        assertEquals(PaginationValue, response.getBody().getSize());
+        assertEquals(PaginationValue, response.getBody().getTotalElements());
+        assertEquals(PaginationValue, response.getBody().getTotalPages());
+        assertTrue(response.getBody().getContent().size() == 1);
         assertEquals(0, service.getNotifications().size());
     }
 
@@ -130,8 +134,6 @@ class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(UserRequestDTO.class, response.getBody().getClass());
-
-
         assertEquals(NAME, response.getBody().getName());
         assertEquals(EMAIL, response.getBody().getEmail());
     }
@@ -147,6 +149,4 @@ class UserControllerTest {
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(service, times(1)).delete(anyLong());
     }
-
-
 }

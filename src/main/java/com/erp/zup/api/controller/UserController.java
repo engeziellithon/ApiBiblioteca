@@ -1,6 +1,7 @@
 package com.erp.zup.api.controller;
 
 import com.erp.zup.api.config.mapper.MapperUtil;
+import com.erp.zup.api.dto.pagination.PaginationDTO;
 import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
 import com.erp.zup.domain.Role;
@@ -15,16 +16,24 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
+import org.modelmapper.config.Configuration;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -37,14 +46,10 @@ import java.util.stream.Collectors;
 public class UserController {
 
     @Autowired
-    private IUserService service;
+    private UserService service;
 
     @Autowired
     private MapperUtil mapper;
-
-    protected static final Logger logger = LogManager.getLogger(UserController.class);
-
-
 
     private static final String ID = "/{id}";
 
@@ -53,6 +58,8 @@ public class UserController {
     @GetMapping(value = ID)
     public ResponseEntity<UserRequestDTO> findById(@PathVariable Long id) {
         Optional<User> user = service.findById(id);
+
+
         return ResponseEntity.ok().body(mapper.map(user, UserRequestDTO.class));
     }
 
@@ -64,14 +71,20 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "Authentication Failure", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<List<UserRequestDTO>> findAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<User> listUsers = service.findAll(pageable);
+    public ResponseEntity findAll(@Valid @PageableDefault(sort = {"name", "id"}, direction = Sort.Direction.ASC,value = 50) Pageable pageable) {
 
-        if (listUsers == null)
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(),pageable.getSort());
+        if (!pageable.getSort().stream().map(order -> order.getProperty()).collect(Collectors.toList()).stream()
+                .collect(Collectors.toList()).stream().anyMatch(c->c.equals("name") || c.equals("id"))) {
+            pageRequest = PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(),Sort.by("name"));
+        }
+
+        Page<User> listUsers = service.findAll(pageRequest);
+
+        if (listUsers.getSize() == 0)
             return ResponseEntity.notFound().build();
 
-        return ResponseEntity.ok().body(listUsers
-                .stream().map(x -> mapper.map(x, UserRequestDTO.class)).collect(Collectors.toList()));
+        return ResponseEntity.ok().body(mapper.mapToGenericPagination(listUsers,new TypeToken<PaginationDTO<UserRequestDTO>>() {}.getType()));
     }
 
     @PostMapping
@@ -95,26 +108,11 @@ public class UserController {
     }
 
     @DeleteMapping(value = ID)
-    public ResponseEntity<UserRequestDTO> delete(@PathVariable Long id) {
+    public ResponseEntity delete(@PathVariable Long id) {
         service.delete(id);
+        if(service.isValid())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(service.getNotifications());
+
         return ResponseEntity.noContent().build();
     }
-
-//    @PostMapping("/sentry")
-//    public void sentry(@RequestBody UserRequestDTO obj) throws Exception {
-//        logger.info("get data db");
-//
-//        try {
-//           var exception = 1/0;
-//        } catch (Exception e) {
-//            logger.error(e.getMessage(),e);
-//        }
-//
-//    }
-//
-//    static String extractPostRequestBody(UserRequestDTO obj) throws IOException {
-//        Gson gson = new Gson();
-//        var json = gson.toJson(obj);
-//        return json;
-//    }
 }

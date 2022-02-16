@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,5 +46,10 @@ public class User extends BaseEntity {
 
     public void EncodePassword(String password) {
         setPassword(new BCryptPasswordEncoder().encode(password));
+    }
+
+
+    public boolean CheckPasswordMatch(String password) {
+        return !new BCryptPasswordEncoder().matches(password, getPassword());
     }
 }

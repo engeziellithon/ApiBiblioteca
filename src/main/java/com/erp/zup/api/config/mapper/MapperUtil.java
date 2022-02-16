@@ -1,9 +1,15 @@
 package com.erp.zup.api.config.mapper;
 
+import com.erp.zup.api.dto.pagination.PaginationDTO;
+import com.erp.zup.api.dto.user.request.UserRequestDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.modelmapper.config.Configuration;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +44,10 @@ public class MapperUtil {
      */
     public <S, D> D map(S source, Class<D> destClass) {
         return this.modelMapper.map(source, destClass);
+    }
+
+    public <S, D> PaginationDTO<D> mapToGenericPagination(S source,Type type) {
+        return this.modelMapper.map(source, type);
     }
 
     /**
