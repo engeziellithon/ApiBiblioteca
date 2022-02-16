@@ -1,9 +1,12 @@
 package com.erp.zup.domain;
 
 import jflunt.validations.Contract;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -11,18 +14,18 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
-
 @Getter
-@Setter
+@Setter(value = AccessLevel.PRIVATE)
 @Table(name = "users")
 public class User extends BaseEntity {
 
-    public User(Long Id, String name,String email,String password,List<Role> roles){
+    public User(Long Id, String name, String email, String password, List<Role> roles) {
 
-//        addNotifications(new Contract()
-//                .isEmail(email,"email","Necessário um email válido")
-//                .hasMinLen(password,6,"password","O senha precisa ter no minimo 6 caracteres")
-       // );
+        addNotifications(new Contract()
+                .isEmail(email, "email", "Necessário um email válido")
+                .isNotNull(name, "name", "Necessário informar o nome")
+                .isTrue(roles != null && !roles.isEmpty(), "roles", "Necessário informar as funções do usuário")
+                .hasMinLen(password, 6, "password", "O senha precisa ter no minimo 6 caracteres"));
 
         this.setId(Id);
         this.name = name;
@@ -32,17 +35,15 @@ public class User extends BaseEntity {
     }
 
 
-
     private String name;
-    @Column(unique=true)
+    @Column(unique = true)
     private String email;
     private String password;
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<Role> roles = new ArrayList<>();
 
 
-
-    public void EncodePassword(String passwordEncode){
-        setPassword(passwordEncode);
+    public void EncodePassword(String password) {
+        setPassword(new BCryptPasswordEncoder().encode(password));
     }
 }

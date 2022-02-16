@@ -39,7 +39,7 @@ public class AuthController extends Notifiable {
         User user = userService.findUserByEmail(auth.getEmail());
 
         if (user == null || (!new BCryptPasswordEncoder().matches(auth.getPassword(), user.getPassword()))) {
-            addNotification("User", "User not found or password incorrect.");
+            addNotification("User", "Usuário não encontrado ou senha incorreta.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(getNotifications());
         }
 
@@ -58,7 +58,7 @@ public class AuthController extends Notifiable {
             String subject = authService.DecodedToken(authorizationHeader);
 
             if (subject == null) {
-                addNotification("AUTHORIZATION", "Incorrect authorization or refresh token is expired.");
+                addNotification("AUTHORIZATION", "Dados de autenticação incorretos ou o token expirou.");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(getNotifications());
             }
 
@@ -68,7 +68,7 @@ public class AuthController extends Notifiable {
 
             return ResponseEntity.ok(tokens);
         } else {
-            addNotification("AUTHORIZATION", "The authorization not sent in the header.");
+            addNotification("AUTHORIZATION", "O token não foi enviada no cabeçalho.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(getNotifications());
         }
     }

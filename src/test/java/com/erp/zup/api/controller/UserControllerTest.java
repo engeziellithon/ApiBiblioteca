@@ -53,9 +53,17 @@ class UserControllerTest {
         startUser();
     }
 
+    private void startUser() {
+        String ROLE = "User";
+        user = new User(ID, NAME, EMAIL,  PASSWORD,List.of(new Role(ROLE)));
+        userDTO = new UserRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
+        userUpdateRequestDTO = new UserUpdateRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
+        mapper = new MapperUtil();
+    }
+
     @Test
     void whenFindByIdThenReturnSuccess() {
-        when(service.findById(anyLong())).thenReturn(user);
+        //when(service.findById(anyLong())).thenReturn(user);
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
         ResponseEntity<UserRequestDTO> response = controller.findById(ID);
@@ -93,7 +101,7 @@ class UserControllerTest {
 
     @Test
     void whenCreateThenReturnCreated() {
-        when(service.create(any())).thenReturn(user);
+        //when(service.create(any())).thenReturn(user);
 
         ResponseEntity<UserRequestDTO> response = controller.create(userDTO);
 
@@ -104,7 +112,7 @@ class UserControllerTest {
 
     @Test
     void whenUpdateThenReturnSuccess() {
-        when(service.update(user)).thenReturn(user);
+        //when(service.update(user)).thenReturn(user);
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
         ResponseEntity<UserRequestDTO> response = controller.update(ID, userUpdateRequestDTO);
@@ -132,11 +140,5 @@ class UserControllerTest {
         verify(service, times(1)).delete(anyLong());
     }
 
-    private void startUser() {
-        String ROLE = "User";
-        user = new User(ID, NAME, EMAIL,  PASSWORD,List.of(new Role(ROLE)));
-        userDTO = new UserRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
-        userUpdateRequestDTO = new UserUpdateRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
-        mapper = new MapperUtil();
-    }
+
 }

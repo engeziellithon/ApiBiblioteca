@@ -3,8 +3,6 @@ package com.erp.zup.api.controller;
 import com.auth0.jwt.JWT;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
-import com.erp.zup.api.dto.user.request.RoleRequestDTO;
-import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.AuthService.AuthService;
@@ -20,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
@@ -49,39 +46,32 @@ class AuthControllerTest {
     private AuthController controller;
 
     @Mock
-    private JWT jwt;
-
-    @Mock
     private UserService service;
 
     @Mock
     private AuthService authService;
 
-    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        //MockMvcBuilders.standaloneSetup(controller).build();
+        MockMvcBuilders.standaloneSetup(controller).build();
         startUser();
     }
 
     private void startUser() {
         authDTO = new AuthDTO(EMAIL, PASSWORD);
         user = new User(ID,NAME, EMAIL, PASSWORD,List.of(new Role(ROLE)));
-        passwordEncoder = new BCryptPasswordEncoder();
         authResponseDTO = new AuthResponseDTO(Token,Token);
     }
 
     @Test
     void whenAuthThenReturnSuccess() {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.EncodePassword(user.getPassword());
         when(service.findUserByEmail(anyString())).thenReturn(user);
         when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 
         ResponseEntity<AuthResponseDTO> response = controller.auth(authDTO,new MockHttpServletRequest());
-
-
 
         assertNotNull(response);
         assertNotNull(response.getBody());
@@ -105,12 +95,12 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
         assertEquals("User", response.getBody().get(0).getProperty());
-        assertEquals("User not found or password incorrect.", response.getBody().get(0).getMessage());
+        assertEquals("Usuário não encontrado ou senha incorreta.", response.getBody().get(0).getMessage());
     }
 
     @Test
     void whenSendAnNotExistingEmailThenReturnNotFound()  {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.EncodePassword(user.getPassword());
         when(service.findUserByEmail(anyString())).thenReturn(null);
         when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 
@@ -122,7 +112,7 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
         assertEquals("User", response.getBody().get(0).getProperty());
-        assertEquals("User not found or password incorrect.", response.getBody().get(0).getMessage());
+        assertEquals("Usuário não encontrado ou senha incorreta.", response.getBody().get(0).getMessage());
     }
 
 
@@ -163,7 +153,7 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatusCode().value());
         assertEquals("AUTHORIZATION", response.getBody().get(0).getProperty());
-        assertEquals("Incorrect authorization or refresh token is expired.", response.getBody().get(0).getMessage());
+        assertEquals("Dados de autenticação incorretos ou o token expirou.", response.getBody().get(0).getMessage());
     }
 
     @Test
@@ -181,6 +171,6 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatusCode().value());
         assertEquals("AUTHORIZATION", response.getBody().get(0).getProperty());
-        assertEquals("The authorization not sent in the header.", response.getBody().get(0).getMessage());
+        assertEquals("O token não foi enviada no cabeçalho.", response.getBody().get(0).getMessage());
     }
 }

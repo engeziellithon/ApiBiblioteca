@@ -8,8 +8,6 @@ import jflunt.notifications.Notifiable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -25,24 +23,22 @@ public class UserService extends Notifiable implements IUserService {
     @Autowired
     private IRoleRepository roleRepo;
 
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
     @Override
-    public User create(User user) {
+    public Optional<User> create(User user) {
         checkUserRegistered(user);
-        if (!isValid())
-            return user;
+        if (isValid())
+            return Optional.ofNullable(userRepo.save(user));
 
-        return userRepo.save(user);
+        return Optional.empty();
     }
 
     @Override
-    public User update(User user) {
+    public Optional<User> update(User user) {
         checkUserRegistered(user);
-        if (!isValid())
-            return null;
+        if (isValid())
+            return Optional.ofNullable(userRepo.save(user));
 
-        return userRepo.save(user);
+        return Optional.empty();
     }
 
 
@@ -53,33 +49,14 @@ public class UserService extends Notifiable implements IUserService {
             userRepo.deleteById(id);
     }
 
-    @Override
-    public User findById(Long id) {
+    public Optional<User> findById(Long id) {
         Optional<User> user = userRepo.findById(id);
-        if (user.isEmpty())
-            addNotification("User", "Não encontrado");
-
-        return user.orElse(null);
-    }
-
-
-    @Override
-    public Role createRole(Role role) {
-        Role roleBD = roleRepo.findByName(role.getName());
-
-        if (roleBD != null && !role.getId().equals(roleBD.getId())) {
-            addNotification("Role", "Função já cadastrada");
-            return role;
+        if (user ==  null || user.isEmpty()){
+            addNotification("User", "Usuário não encontrado.");
+            return Optional.empty();
         }
 
-        return roleRepo.save(role);
-    }
-
-    @Override
-    public void saveRoleToUser(String email, String roleName) {
-        User user = userRepo.findByEmailIgnoreCase(email);
-        Role role = roleRepo.findByName(roleName);
-        user.getRoles().add(role);
+        return user;
     }
 
     @Override
@@ -92,22 +69,26 @@ public class UserService extends Notifiable implements IUserService {
         return userRepo.findAll(pageable);
     }
 
-    //
-    private void checkUserRegistered(User user) {
+
+    protected void checkUserRegistered(User user) {
         User userBD = findUserByEmail(user.getEmail());
 
-        if (userBD != null && !user.getId().equals(userBD.getId())) {
-            addNotification("User", "Usuário já cadastrado para o email informado");
+        if (userBD != null && user.getId() != userBD.getId()) {
+            addNotification("User", "Usuário já cadastrado para o email informado.");
             return;
         }
 
-        if (user.getPassword() != null)
-            user.EncodePassword(passwordEncoder.encode(user.getPassword()));
+        if(userBD != null && user.getPassword() == null)
+            user = new User(user.getId(),user.getName(),user.getEmail(),userBD.getPassword(),user.getRoles());
+         else
+            user.EncodePassword(user.getPassword());
 
         for (Role role : user.getRoles()) {
             Role roleDB = roleRepo.findByName(role.getName());
             if (roleDB != null)
-                role.setId(roleDB.getId());
+                role = roleDB;
         }
     }
+
+
 }

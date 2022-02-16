@@ -3,23 +3,18 @@ package com.erp.zup.api.controller;
 import com.erp.zup.api.config.mapper.MapperUtil;
 import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
+import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.IUserService;
-import com.google.gson.Gson;
-import io.sentry.Breadcrumb;
-import io.sentry.Sentry;
-import io.sentry.SentryLevel;
+import com.erp.zup.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,12 +24,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -81,17 +74,22 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserRequestDTO> create(@RequestBody @Valid UserRequestDTO obj) {
+    public ResponseEntity create(@RequestBody @Valid UserRequestDTO obj) {
+        Optional<User> user = service.create(mapper.map(obj, User.class));
+
+        if (user.isEmpty())
+            return ResponseEntity.badRequest().body(service.getNotifications());
+
         URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest().path(ID).buildAndExpand(service.create(mapper.map(obj, User.class)).getId()).toUri();
+                .fromCurrentRequest().path(ID).buildAndExpand(service.create(mapper.map(obj, User.class)).get().getId()).toUri();
 
         return ResponseEntity.created(uri).build();
     }
 
     @PutMapping(value = ID)
     public ResponseEntity<UserRequestDTO> update(@PathVariable Long id, @RequestBody @Valid UserUpdateRequestDTO obj) {
-        var userEntity = mapper.map(obj, User.class);
-        userEntity.setId(id);
+        User userEntity = new User(id,obj.getName(),obj.getEmail(),obj.getPassword(),mapper.mapAll(obj.getRoles(),Role.class));
+
         return ResponseEntity.ok().body(mapper.map(service.update(userEntity), UserRequestDTO.class));
     }
 
@@ -101,17 +99,21 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/sentry")
-    public void sentry(@RequestBody UserRequestDTO obj) throws Exception {
-        logger.info("get data db");
-
-
-
-    }
-
-    static String extractPostRequestBody(UserRequestDTO obj) throws IOException {
-        Gson gson = new Gson();
-        var json = gson.toJson(obj);
-        return json;
-    }
+//    @PostMapping("/sentry")
+//    public void sentry(@RequestBody UserRequestDTO obj) throws Exception {
+//        logger.info("get data db");
+//
+//        try {
+//           var exception = 1/0;
+//        } catch (Exception e) {
+//            logger.error(e.getMessage(),e);
+//        }
+//
+//    }
+//
+//    static String extractPostRequestBody(UserRequestDTO obj) throws IOException {
+//        Gson gson = new Gson();
+//        var json = gson.toJson(obj);
+//        return json;
+//    }
 }

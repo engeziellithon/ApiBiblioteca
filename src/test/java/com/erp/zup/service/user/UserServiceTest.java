@@ -1,7 +1,9 @@
 package com.erp.zup.service.user;
 
+import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
+import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.repository.IUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,12 +16,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -32,7 +37,8 @@ class UserServiceTest {
     private static final String NAME = "user";
     private static final String EMAIL = "user@user.com";
     private static final String PASSWORD = "password";
-    private static final String ROLE = "User";
+    private static final Role ROLE = new Role("User");
+    private static final List<Role> ROLES = List.of(ROLE);
 
     @InjectMocks
     private UserService service;
@@ -40,8 +46,11 @@ class UserServiceTest {
     @Mock
     private IUserRepository repository;
 
+    @Mock
+    private IRoleRepository roleRepo;
+
     private User user;
-    private final Optional<User> optionalUser = Optional.of(new User(ID, NAME, EMAIL, PASSWORD, List.of(new Role(ROLE))));
+    private Optional<User> optionalUser;
 
 
     @BeforeEach
@@ -51,34 +60,34 @@ class UserServiceTest {
     }
 
     void start() {
-        user = new User(ID, NAME, EMAIL, PASSWORD, List.of(new Role(ROLE)));
-        //UserRequestDTO userVM = new UserRequestDTO(EMAIL, NAME, PASSWORD, List.of(new RoleRequestDTO(ROLE)));
-
+        user = new User(ID, NAME, EMAIL, PASSWORD, List.of(ROLE));
+        optionalUser = Optional.of(new User(ID, NAME, EMAIL, PASSWORD, List.of(ROLE)));
     }
 
     @Test
-    void whenFindByIdThenReturnAnUserInstance() {
+    void whenFindByIdThenReturnAnUser() {
         when(repository.findById(anyLong())).thenReturn(optionalUser);
 
-        User response = service.findById(ID);
+        Optional<User> response = service.findById(ID);
 
         assertNotNull(response);
-
-        assertEquals(User.class, response.getClass());
-        assertEquals(ID, response.getId());
-        assertEquals(NAME, response.getName());
-        assertEquals(EMAIL, response.getEmail());
+        assertEquals(User.class, response.get().getClass());
+        assertEquals(ID, response.get().getId());
+        assertEquals(NAME, response.get().getName());
+        assertEquals(EMAIL, response.get().getEmail());
+        assertEquals(ROLES.stream().map(Role::getName).collect(Collectors.toList()),
+                response.get().getRoles().stream().map(Role::getName).collect(Collectors.toList()));
     }
 
     @Test
-    void whenFindByIdThenReturnAnObjectNotFoundException() {
+    void whenFindByIdThenReturnNotFound() {
+        when(repository.findById(anyLong())).thenReturn(null);
 
-        when(repository.findById(anyLong()))
-                .thenReturn(null);
+        Optional<User> response = service.findById(ID);
 
-
-        service.findById(ID);
-
+        assertEquals(response,Optional.empty());
+        assertEquals("User", service.getNotifications().get(0).getProperty());
+        assertEquals("Usuário não encontrado.", service.getNotifications().get(0).getMessage());
     }
 
     @Test
@@ -101,29 +110,35 @@ class UserServiceTest {
     void whenCreateThenReturnSuccess() {
         when(repository.save(any())).thenReturn(user);
 
-        User response = service.create(user);
+        Optional<User> response = service.create(user);
 
         assertNotNull(response);
-        assertEquals(User.class, response.getClass());
-        assertEquals(ID, response.getId());
-        assertEquals(NAME, response.getName());
-        assertEquals(EMAIL, response.getEmail());
-        //assertEquals(PASSWORD, response.getPassword());
-    }
-
-    @Test
-    void whenCreateThenReturnAnDataIntegrityViolationException() {
-        when(repository.findByEmailIgnoreCase(anyString())).thenReturn(user);
-        optionalUser.ifPresent(value -> value.setId(2L));
-        service.create(user);
+        assertEquals(ID, response.get().getId());
+        assertEquals(NAME, response.get().getName());
+        assertEquals(EMAIL, response.get().getEmail());
     }
 
 
     @Test
-    void whenUpdateThenReturnAnDataIntegrityViolationException() {
-        when(repository.findByEmailIgnoreCase(anyString())).thenReturn(user);
-        optionalUser.ifPresent(value -> value.setId(2L));
-        service.create(user);
+    void whenCreateThenReturnEmpty() {
+        when(service.findUserByEmail(any())).thenReturn(user);
+
+        Optional<User> response = service.create(new User(100L,user.getName(),user.getEmail(),user.getPassword(),user.getRoles()));
+
+        assertEquals(response,Optional.empty());
+        assertEquals("User", service.getNotifications().get(0).getProperty());
+        assertEquals("Usuário já cadastrado para o email informado.", service.getNotifications().get(0).getMessage());
+    }
+
+    @Test
+    void whenUpdateThenReturnEmpty() {
+        when(service.findUserByEmail(any())).thenReturn(user);
+
+        Optional<User> response = service.update(new User(100L,user.getName(),user.getEmail(),user.getPassword(),user.getRoles()));
+
+        assertEquals(response,Optional.empty());
+        assertEquals("User", service.getNotifications().get(0).getProperty());
+        assertEquals("Usuário já cadastrado para o email informado.", service.getNotifications().get(0).getMessage());
     }
 
     @Test
@@ -135,24 +150,66 @@ class UserServiceTest {
     }
 
     @Test
-    void whenDeleteThenReturnObjectNotFoundException() {
-        when(repository.findById(anyLong()))
-                .thenReturn(Optional.ofNullable(user));
+    void whenDeleteThenReturnNotFound() {
+        when(repository.findById(1L)).thenReturn(Optional.empty());
 
         service.delete(ID);
-
+        assertEquals("User", service.getNotifications().get(0).getProperty());
+        assertEquals("Usuário não encontrado.", service.getNotifications().get(0).getMessage());
     }
 
     @Test
     void whenUpdateThenReturnSuccess() {
         when(repository.save(any())).thenReturn(user);
-        User response = service.update(user);
+        when(roleRepo.findByName(anyString())).thenReturn(ROLE);
+        Optional<User> response = service.update(user);
 
         assertNotNull(response);
-        assertEquals(User.class, response.getClass());
-        assertEquals(ID, response.getId());
-        assertEquals(NAME, response.getName());
-        assertEquals(EMAIL, response.getEmail());
+        assertEquals(User.class, response.get().getClass());
+        assertEquals(ID, response.get().getId());
+        assertEquals(NAME, response.get().getName());
+        assertEquals(EMAIL, response.get().getEmail());
     }
 
+    @Test
+    void whenUpdateThenReturnNotFound() {
+        when(repository.save(any())).thenReturn(user);
+
+        Optional<User> response = service.update(user);
+
+        assertNotNull(response);
+        assertEquals(User.class, response.get().getClass());
+        assertEquals(ID, response.get().getId());
+        assertEquals(NAME, response.get().getName());
+        assertEquals(EMAIL, response.get().getEmail());
+    }
+
+    @Test
+    void whenCheckUserRegisteredWithSuccess() {
+        when(repository.findById(anyLong())).thenReturn(optionalUser);
+        when(service.findUserByEmail(anyString())).thenReturn(user);
+
+        service.checkUserRegistered(user);
+        assertEquals(0, service.getNotifications().size());
+    }
+
+    @Test
+    void whenCheckUserRegisteredWithErrorNotFound() {
+        when(repository.findById(anyLong())).thenReturn(optionalUser);
+        when(service.findUserByEmail(anyString())).thenReturn(user);
+
+
+        service.checkUserRegistered(new User(null, user.getName(),user.getEmail(),user.getPassword(),user.getRoles()));
+        assertEquals("User", service.getNotifications().get(0).getProperty());
+        assertEquals("Usuário já cadastrado para o email informado.", service.getNotifications().get(0).getMessage());
+    }
+
+    @Test
+    void whenCheckUserRegisteredPassNotPassworWithReturnSucess() {
+        when(repository.findById(anyLong())).thenReturn(optionalUser);
+        when(service.findUserByEmail(anyString())).thenReturn(user);
+
+        service.checkUserRegistered(new User(user.getId(), user.getName(),user.getEmail(),null,user.getRoles()));
+        assertEquals(0, service.getNotifications().size());
+    }
 }

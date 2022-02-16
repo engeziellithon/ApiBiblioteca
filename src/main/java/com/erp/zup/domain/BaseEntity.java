@@ -2,12 +2,16 @@ package com.erp.zup.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jflunt.notifications.Notifiable;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.OffsetDateTime;
 
-
 @MappedSuperclass
+@Getter
+@Setter(value = AccessLevel.PROTECTED)
 public abstract class BaseEntity extends Notifiable {
 
     @Id
@@ -24,7 +28,6 @@ public abstract class BaseEntity extends Notifiable {
     private OffsetDateTime lastUpdated;
 
 
-
     @PrePersist
     public void prePersist(){
         dateCreated = OffsetDateTime.now();
@@ -34,14 +37,5 @@ public abstract class BaseEntity extends Notifiable {
     @PreUpdate
     public void preUpdate(){
         lastUpdated = OffsetDateTime.now();
-    }
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 }
