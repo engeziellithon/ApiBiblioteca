@@ -18,9 +18,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,6 +49,7 @@ class UserControllerTest {
     @Mock
     private UserService service;
 
+    @Mock
     private MapperUtil mapper;
 
     @BeforeEach
@@ -56,14 +61,13 @@ class UserControllerTest {
     private void startUser() {
         String ROLE = "User";
         user = new User(ID, NAME, EMAIL,  PASSWORD,List.of(new Role(ROLE)));
-        userDTO = new UserRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
-        userUpdateRequestDTO = new UserUpdateRequestDTO(NAME, EMAIL, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
-        mapper = new MapperUtil();
+        userDTO = new UserRequestDTO(EMAIL, NAME, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
+        userUpdateRequestDTO = new UserUpdateRequestDTO(EMAIL, NAME, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
     }
 
     @Test
     void whenFindByIdThenReturnSuccess() {
-        //when(service.findById(anyLong())).thenReturn(user);
+        when(service.findById(user.getId())).thenReturn(Optional.of(user));
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
         ResponseEntity<UserRequestDTO> response = controller.findById(ID);
@@ -77,6 +81,7 @@ class UserControllerTest {
         assertEquals(NAME, response.getBody().getName());
         assertEquals(EMAIL, response.getBody().getEmail());
         assertEquals(PASSWORD, response.getBody().getPassword());
+        assertEquals(0, service.getNotifications().size());
     }
 
     @Test
@@ -97,11 +102,14 @@ class UserControllerTest {
         assertEquals(NAME, response.getBody().get(INDEX).getName());
         assertEquals(EMAIL, response.getBody().get(INDEX).getEmail());
         assertEquals(PASSWORD, response.getBody().get(INDEX).getPassword());
+        assertEquals(0, service.getNotifications().size());
     }
 
     @Test
     void whenCreateThenReturnCreated() {
-        //when(service.create(any())).thenReturn(user);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(service.create(any())).thenReturn(Optional.of(user));
 
         ResponseEntity<UserRequestDTO> response = controller.create(userDTO);
 
@@ -112,7 +120,7 @@ class UserControllerTest {
 
     @Test
     void whenUpdateThenReturnSuccess() {
-        //when(service.update(user)).thenReturn(user);
+        when(service.update(user)).thenReturn(Optional.of(user));
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
         ResponseEntity<UserRequestDTO> response = controller.update(ID, userUpdateRequestDTO);
@@ -123,7 +131,7 @@ class UserControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(UserRequestDTO.class, response.getBody().getClass());
 
-        //assertEquals(ID, response.getBody().get);
+
         assertEquals(NAME, response.getBody().getName());
         assertEquals(EMAIL, response.getBody().getEmail());
     }

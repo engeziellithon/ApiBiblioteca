@@ -52,7 +52,8 @@ public class UserController {
 
     @GetMapping(value = ID)
     public ResponseEntity<UserRequestDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok().body(mapper.map(service.findById(id), UserRequestDTO.class));
+        Optional<User> user = service.findById(id);
+        return ResponseEntity.ok().body(mapper.map(user, UserRequestDTO.class));
     }
 
 
@@ -81,7 +82,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(service.getNotifications());
 
         URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest().path(ID).buildAndExpand(service.create(mapper.map(obj, User.class)).get().getId()).toUri();
+                .fromCurrentRequest().path(ID).buildAndExpand(user.get().getId()).toUri();
 
         return ResponseEntity.created(uri).build();
     }

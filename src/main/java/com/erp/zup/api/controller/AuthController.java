@@ -24,7 +24,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RestController
 @RequestMapping("/api/auth")
 @Slf4j
-@Tag(name = "Auth", description = "Authenticate user and update token")
+@Tag(name = "Auth", description = "Authenticate user and refresh token")
 public class AuthController extends Notifiable {
 
     @Autowired

@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
  * Util class for Mapper Model operations.
  */
 @Component("mapperUtil")
-public  final class MapperUtil {
+public class MapperUtil {
 
     /**
      * Model mapper.
      */
-    protected final ModelMapper modelMapper;
+    protected ModelMapper modelMapper;
 
     /**
      * Default Constructor.
