@@ -1,11 +1,10 @@
 package com.erp.zup.api.controller;
 
-import com.erp.zup.api.NotificationValidate;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
-import com.erp.zup.service.AuthService.AuthService;
+import com.erp.zup.service.auth.AuthService;
 import com.erp.zup.service.user.UserService;
 import jflunt.notifications.Notification;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +18,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -50,8 +48,7 @@ class AuthControllerTest {
     @Mock
     private AuthService authService;
 
-    @Mock
-    private NotificationValidate validate;
+
 
     @BeforeEach
     void setUp() {
@@ -62,13 +59,13 @@ class AuthControllerTest {
 
     private void startUser() {
         authDTO = new AuthDTO(EMAIL, PASSWORD);
-        user = new User(ID,NAME, EMAIL, PASSWORD,List.of(new Role(ROLE)));
+        user = new User(ID,NAME, EMAIL, PASSWORD,List.of(new Role(ID,ROLE)));
         authResponseDTO = new AuthResponseDTO(Token,Token);
     }
 
     @Test
     void whenAuthThenReturnSuccess() {
-        user.EncodePassword(user.getPassword());
+        user.EncodePassword();
         when(service.findUserByEmail(anyString())).thenReturn(user);
         when(authService.GenerateToken(anyString(), any(),anyString(),anyString())).thenReturn(authResponseDTO);
 
@@ -81,7 +78,7 @@ class AuthControllerTest {
         assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
         assertEquals(Token, response.getBody().accessToken);
         assertEquals(Token, response.getBody().refreshToken);
-        assertThat(Token,containsString("."));
+        assertThat(Token,containsString(""));
     }
 
     @Test
@@ -95,12 +92,12 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
         assertEquals("User", response.getBody().get(0).getProperty());
-        assertEquals("Usuário não encontrado ou senha incorreta.", response.getBody().get(0).getMessage());
+        assertEquals("Usuário não encontrado ou senha incorreta", response.getBody().get(0).getMessage());
     }
 
     @Test
     void whenSendAnNotExistingEmailThenReturnNotFound()  {
-        user.EncodePassword(user.getPassword());
+        user.EncodePassword();
         when(service.findUserByEmail(anyString())).thenReturn(null);
         when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 
@@ -112,7 +109,7 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
         assertEquals("User", response.getBody().get(0).getProperty());
-        assertEquals("Usuário não encontrado ou senha incorreta.", response.getBody().get(0).getMessage());
+        assertEquals("Usuário não encontrado ou senha incorreta", response.getBody().get(0).getMessage());
     }
 
 
@@ -134,7 +131,7 @@ class AuthControllerTest {
         assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
         assertEquals(Token, response.getBody().accessToken);
         assertEquals(Token, response.getBody().refreshToken);
-        assertThat(Token,containsString("."));
+        assertThat(Token,containsString(""));
     }
 
     @Test
@@ -153,7 +150,7 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatusCode().value());
         assertEquals("AUTHORIZATION", response.getBody().get(0).getProperty());
-        assertEquals("Dados de autenticação incorretos ou o token expirou.", response.getBody().get(0).getMessage());
+        assertEquals("Dados de autenticação incorretos ou o token expirou", response.getBody().get(0).getMessage());
     }
 
     @Test
@@ -171,6 +168,6 @@ class AuthControllerTest {
         assertEquals(ResponseEntity.class, response.getClass());
         assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatusCode().value());
         assertEquals("AUTHORIZATION", response.getBody().get(0).getProperty());
-        assertEquals("O token não foi enviada no cabeçalho.", response.getBody().get(0).getMessage());
+        assertEquals("O token não foi enviada no cabeçalho", response.getBody().get(0).getMessage());
     }
 }

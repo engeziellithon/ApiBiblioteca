@@ -1,6 +1,5 @@
-package com.erp.zup.service.AuthService;
+package com.erp.zup.service.auth;
 
-import com.erp.zup.api.controller.AuthController;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
@@ -11,18 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 class AuthServiceTest {
@@ -50,7 +45,7 @@ class AuthServiceTest {
 
     private void startUser() {
         authDTO = new AuthDTO(EMAIL, PASSWORD);
-        user = new User(ID,NAME, EMAIL, PASSWORD, List.of(new Role(ROLE)));
+        user = new User(ID,NAME, EMAIL, PASSWORD, List.of(new Role(ID,ROLE)));
         authResponseDTO = new AuthResponseDTO(Token,Token);
     }
 
@@ -69,20 +64,6 @@ class AuthServiceTest {
     }
 
     @Test
-    void whenCallGenerateTokenReturnNotifications() {
-        AuthResponseDTO response = authService.GenerateToken("",null,"","");
-
-        List<Notification> notifications = authService.getNotifications();
-
-        assertNull(response);
-
-        assertEquals("Email", notifications.get(0).getProperty());
-        assertEquals("Necessário um email válido.", notifications.get(0).getMessage());
-        assertEquals("Roles", notifications.get(1).getProperty());
-        assertEquals("Necessário informar as funções do usuário.", notifications.get(1).getMessage());
-    }
-
-    @Test
     void  whenCallDecodedTokenReturnSubject() {
         AuthResponseDTO authResponse = authService.GenerateToken(user.getEmail(),user.getRoles().stream().map(Role::getName).collect(Collectors.toList()),"","");
         when(authServiceMock.DecodedToken(authResponseDTO.accessToken)).thenReturn(user.getEmail());
@@ -93,20 +74,6 @@ class AuthServiceTest {
         assertEquals(user.getEmail(), response);
         assertEquals(0, authService.getNotifications().size());
     }
-
-    @Test
-    void whenCallDecodedTokenReturnNotifications() {
-        when(authServiceMock.DecodedToken(null)).thenReturn(null);
-
-        String response = authService.DecodedToken(null);
-
-        List<Notification> notifications = authService.getNotifications();
-
-        assertNull(response);
-        assertEquals("Token", notifications.get(0).getProperty());
-        assertEquals("Necessário um token", notifications.get(0).getMessage());
-    }
-
 
     @Test
     void whenCallDecodedTokenIncorrectTokenParameterReturnNotifications() {

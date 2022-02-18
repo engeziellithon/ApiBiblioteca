@@ -15,14 +15,21 @@ import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 @Getter
 @Setter
 public class UserRequestDTO {
-        @NotNull
-        @Email
+        @NotEmpty(message = "Necessário um email válido")
+        @NotNull(message = "Necessário um email válido")
+        @Email(message = "Necessário um email válido")
         public String email;
-        @NotNull
+
+        @NotNull(message = "Nome obrigátorio")
+        @NotEmpty(message = "Nome obrigátorio")
         public String name;
-        @NotNull @JsonProperty(access = WRITE_ONLY)
+
+        @NotNull(message = "Senha obrigátoria")
+        @NotEmpty(message = "Senha obrigátoria") @JsonProperty(access = WRITE_ONLY)
         public String password;
-        @NotEmpty
+
+        @NotNull(message = "Função obrigátoria")
+        @NotEmpty(message = "Função obrigátoria")
         public List<RoleRequestDTO> roles;
 }
 

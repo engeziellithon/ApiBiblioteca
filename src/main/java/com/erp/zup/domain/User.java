@@ -6,10 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,8 +42,8 @@ public class User extends BaseEntity {
     private List<Role> roles = new ArrayList<>();
 
 
-    public void EncodePassword(String password) {
-        setPassword(new BCryptPasswordEncoder().encode(password));
+    public void EncodePassword() {
+        setPassword(new BCryptPasswordEncoder().encode(getPassword()));
     }
 
 

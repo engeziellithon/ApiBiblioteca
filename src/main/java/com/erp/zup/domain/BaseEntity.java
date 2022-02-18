@@ -1,21 +1,18 @@
 package com.erp.zup.domain;
 
+import com.erp.zup.service.notifiable.NotifiableValidate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jflunt.notifications.Notifiable;
-import jflunt.notifications.Notification;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
 
 @MappedSuperclass
 @Getter
 @Setter(value = AccessLevel.PROTECTED)
-public abstract class BaseEntity extends Notifiable {
+public abstract class BaseEntity extends NotifiableValidate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

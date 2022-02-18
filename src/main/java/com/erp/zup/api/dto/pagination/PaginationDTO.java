@@ -1,6 +1,5 @@
 package com.erp.zup.api.dto.pagination;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,10 +11,11 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaginationDTO<T> {
+public class PaginationDTO<T>  {
     public int totalPages;
     public int totalElements;
     public int size;
     public int number;
     public List<T> content;
 }
+

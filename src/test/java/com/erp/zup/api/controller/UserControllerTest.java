@@ -5,6 +5,7 @@ import com.erp.zup.api.dto.pagination.PaginationDTO;
 import com.erp.zup.api.dto.user.request.RoleRequestDTO;
 import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
+import com.erp.zup.api.dto.user.response.UserResponseDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.UserService;
@@ -16,14 +17,12 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +43,7 @@ class UserControllerTest {
     private User user;
     private UserRequestDTO userDTO;
     private UserUpdateRequestDTO userUpdateRequestDTO;
-    private PaginationDTO<UserRequestDTO> paginationDTO;
+    private UserResponseDTO userResponseDTO;
 
     @InjectMocks
     private UserController controller;
@@ -64,14 +63,15 @@ class UserControllerTest {
     private void startUser() {
         String ROLE = "User";
 
-        user = new User(ID, NAME, EMAIL,  PASSWORD, List.of(new Role(ROLE)));
+        user = new User(ID, NAME, EMAIL,  PASSWORD, List.of(new Role(ID,ROLE)));
         userDTO = new UserRequestDTO(EMAIL, NAME, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
         userUpdateRequestDTO = new UserUpdateRequestDTO(EMAIL, NAME, PASSWORD,List.of(new RoleRequestDTO(ROLE)));
+        userResponseDTO = new UserResponseDTO(EMAIL, NAME,List.of(new RoleRequestDTO(ROLE)));
     }
 
     @Test
     void whenFindByIdThenReturnSuccess() {
-        when(service.findById(user.getId())).thenReturn(Optional.of(user));
+        when(service.findById(any())).thenReturn(Optional.of(user));
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
         ResponseEntity<UserRequestDTO> response = controller.findById(ID);
@@ -90,16 +90,16 @@ class UserControllerTest {
     @Test
     void whenFindAllThenReturnAListOfUserDTO() {
         when(service.findAll(Mockito.any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(user)));
-        when(mapper.mapToGenericPagination(any(), any())).thenReturn(new PaginationDTO<>(PaginationValue, PaginationValue, PaginationValue,PaginationValue, List.of(userDTO)));
+        when(mapper.mapToGenericPagination(any(), any())).thenReturn(new PaginationDTO<>(PaginationValue, PaginationValue, PaginationValue,PaginationValue, List.of(userResponseDTO)));
 
 
-        ResponseEntity<PaginationDTO<UserRequestDTO>> response = controller.findAll(Pageable.ofSize(1));
+        ResponseEntity<PaginationDTO<UserRequestDTO>> response = controller.findAll(1,1);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(ResponseEntity.class, response.getClass());
-        assertEquals(new PaginationDTO<UserRequestDTO>().getClass(), response.getBody().getClass());
+
 
         assertEquals(PaginationValue, response.getBody().getNumber());
         assertEquals(PaginationValue, response.getBody().getSize());
@@ -124,7 +124,7 @@ class UserControllerTest {
 
     @Test
     void whenUpdateThenReturnSuccess() {
-        when(service.update(user)).thenReturn(Optional.of(user));
+        when(service.update(any())).thenReturn(Optional.of(user));
         when(mapper.map(any(), any())).thenReturn(userDTO);
 
         ResponseEntity<UserRequestDTO> response = controller.update(ID, userUpdateRequestDTO);

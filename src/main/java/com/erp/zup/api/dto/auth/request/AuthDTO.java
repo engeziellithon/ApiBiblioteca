@@ -11,8 +11,8 @@ import javax.validation.constraints.NotNull;
 @Getter
 @Setter
 public class AuthDTO {
-    @NotEmpty  @NotNull  @Email(message = "Necessário um email válido")
+    @NotEmpty(message = "Necessário um email válido")  @NotNull(message = "Necessário um email válido")  @Email(message = "Necessário um email válido")
     public String email;
-    @NotEmpty   @NotNull
+    @NotEmpty(message = "Senha obrigátoria")   @NotNull(message = "Senha obrigátoria")
     public String password;
 }

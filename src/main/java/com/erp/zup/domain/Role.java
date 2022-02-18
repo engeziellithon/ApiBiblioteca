@@ -17,11 +17,12 @@ public class Role extends BaseEntity {
     @Column(unique=true)
     private String name;
 
-    public Role(String name) {
+    public Role(Long id,String name) {
 
         addNotifications(new Contract()
                 .isNotNull(name, "name", "Necessário informar o nome"));
 
+        this.setId(id);
         this.name = name;
     }
 

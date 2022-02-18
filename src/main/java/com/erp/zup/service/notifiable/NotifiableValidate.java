@@ -1,4 +1,4 @@
-package com.erp.zup.api;
+package com.erp.zup.service.notifiable;
 
 import jflunt.notifications.Notifiable;
 import jflunt.notifications.Notification;
@@ -8,12 +8,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class NotificationValidate {
+public abstract class NotifiableValidate {
 
-    private List<Notification> notifications;
+    private List<Notification> notifications = new ArrayList<>();
 
-    public NotificationValidate() {
-        notifications = new ArrayList();
+    public NotifiableValidate() {
+
     }
 
     public List<Notification> getNotifications() {

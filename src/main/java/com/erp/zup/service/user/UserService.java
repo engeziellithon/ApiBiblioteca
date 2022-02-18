@@ -4,7 +4,7 @@ import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.repository.IUserRepository;
-import jflunt.notifications.Notifiable;
+import com.erp.zup.service.notifiable.NotifiableValidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @Service
 @Transactional
-public class UserService extends Notifiable implements IUserService {
+public class UserService extends NotifiableValidate {
 
     @Autowired
     private IUserRepository userRepo;
@@ -23,7 +23,7 @@ public class UserService extends Notifiable implements IUserService {
     @Autowired
     private IRoleRepository roleRepo;
 
-    @Override
+    
     public Optional<User> create(User user) {
         checkUserRegistered(user);
         if (isValid())
@@ -32,7 +32,7 @@ public class UserService extends Notifiable implements IUserService {
         return Optional.empty();
     }
 
-    @Override
+    
     public Optional<User> update(User user) {
         checkUserRegistered(user);
         if (isValid())
@@ -42,7 +42,7 @@ public class UserService extends Notifiable implements IUserService {
     }
 
 
-    @Override
+    
     public void delete(Long id) {
         findById(id);
         if (isValid())
@@ -51,20 +51,22 @@ public class UserService extends Notifiable implements IUserService {
 
     public Optional<User> findById(Long id) {
         Optional<User> user = userRepo.findById(id);
-        if (user ==  null || user.isEmpty()){
-            addNotification("User", "Usuário não encontrado.");
-            return Optional.empty();
-        }
+        if (user ==  null || user.isEmpty())
+            addNotification("User", "Usuário não encontrado");
+
+        return Optional.ofNullable(user).orElse(Optional.empty());
+    }
+
+    
+    public User findUserByEmail(String email) {
+        User user = userRepo.findByEmailIgnoreCase(email);
+        if (user ==  null)
+            addNotification("User", "Usuário não encontrado");
 
         return user;
     }
 
-    @Override
-    public User findUserByEmail(String email) {
-        return userRepo.findByEmailIgnoreCase(email);
-    }
-
-    @Override
+    
     public Page<User> findAll(Pageable pageable) {
         return userRepo.findAll(pageable);
     }
@@ -74,20 +76,22 @@ public class UserService extends Notifiable implements IUserService {
         User userBD = findUserByEmail(user.getEmail());
 
         if (userBD != null && user.getId() != userBD.getId()) {
-            addNotification("User", "Usuário já cadastrado para o email informado.");
+            addNotification("User", "Usuário já cadastrado para o email informado");
             return;
         }
 
         if(userBD != null && user.getPassword() == null)
             user = new User(user.getId(),user.getName(),user.getEmail(),userBD.getPassword(),user.getRoles());
          else
-            user.EncodePassword(user.getPassword());
+            user.EncodePassword();
 
-        for (Role role : user.getRoles()) {
-            Role roleDB = roleRepo.findByName(role.getName());
-            if (roleDB != null)
-                role = roleDB;
-        }
+
+         for (int i = 0; i < user.getRoles().size(); i++){
+             Role roleDB = roleRepo.findByName(user.getRoles().get(i).getName());
+             if (roleDB != null)
+                 user.getRoles().set(i,roleDB);
+         }
+
     }
 
 
