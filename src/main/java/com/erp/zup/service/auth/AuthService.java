@@ -5,7 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
-import com.erp.zup.api.config.jwt.notifiable.NotifiableValidate;
+import com.erp.zup.api.config.notifiable.NotifiableValidate;
 import jflunt.notifications.Notification;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

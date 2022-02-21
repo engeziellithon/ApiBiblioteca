@@ -1,4 +1,4 @@
-package com.erp.zup.api.config.jwt.notifiable;
+package com.erp.zup.api.config.notifiable;
 
 import jflunt.notifications.Notifiable;
 import jflunt.notifications.Notification;

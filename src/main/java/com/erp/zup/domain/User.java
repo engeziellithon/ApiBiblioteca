@@ -41,8 +41,7 @@ public class User extends BaseEntity {
     @ManyToMany(fetch = FetchType.EAGER)
     private List<Role> roles = new ArrayList<>();
 
-    @OneToMany( mappedBy = "user" )
-    private List<Loan> loans;
+
 
     public void EncodePassword() {
         setPassword(new BCryptPasswordEncoder().encode(getPassword()));
