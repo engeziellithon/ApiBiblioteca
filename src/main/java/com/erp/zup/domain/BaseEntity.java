@@ -1,6 +1,6 @@
 package com.erp.zup.domain;
 
-import com.erp.zup.api.config.notifiable.NotifiableValidate;
+import com.erp.zup.api.config.jwt.notifiable.NotifiableValidate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;

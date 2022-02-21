@@ -4,7 +4,7 @@ import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.repository.IUserRepository;
-import com.erp.zup.api.config.notifiable.NotifiableValidate;
+import com.erp.zup.api.config.jwt.notifiable.NotifiableValidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
