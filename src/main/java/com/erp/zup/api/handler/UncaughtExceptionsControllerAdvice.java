@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -29,7 +30,7 @@ public class UncaughtExceptionsControllerAdvice  extends ResponseEntityException
 
     @ExceptionHandler(value = { IllegalArgumentException.class, IllegalStateException.class })
     protected ResponseEntity<Object> handleConflict(RuntimeException ex, WebRequest request) {
-        return handleExceptionInternal(ex, null,
+        return handleExceptionInternal(ex, List.of(new Notification("", "Parâmetros incorretos")),
                 new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
 }

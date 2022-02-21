@@ -1,5 +1,7 @@
 package com.erp.zup.service.auth;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
@@ -66,18 +68,18 @@ class AuthServiceTest {
     @Test
     void  whenCallDecodedTokenReturnSubject() {
         AuthResponseDTO authResponse = authService.GenerateToken(user.getEmail(),user.getRoles().stream().map(Role::getName).collect(Collectors.toList()),"","");
-        when(authServiceMock.DecodedToken(authResponseDTO.accessToken)).thenReturn(user.getEmail());
+        when(authServiceMock.DecodedToken(authResponseDTO.accessToken)).thenReturn(JWT.decode(Token));
 
-        String response = authService.DecodedToken(authResponse.accessToken);
+        DecodedJWT response = authService.DecodedToken(authResponse.accessToken);
 
         assertNotNull(response);
-        assertEquals(user.getEmail(), response);
+        assertEquals(user.getEmail(), response.getSubject());
         assertEquals(0, authService.getNotifications().size());
     }
 
     @Test
     void whenCallDecodedTokenIncorrectTokenParameterReturnNotifications() {
-        String response = authService.DecodedToken("teste");
+        DecodedJWT response = authService.DecodedToken(Token);
 
         List<Notification> notifications = authService.getNotifications();
 

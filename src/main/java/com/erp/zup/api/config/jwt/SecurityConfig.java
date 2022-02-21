@@ -1,6 +1,7 @@
 package com.erp.zup.api.config.jwt;
 
 
+import com.erp.zup.api.enums.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -59,13 +60,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable();
-        http.sessionManagement().sessionCreationPolicy(STATELESS);
-        http.authorizeRequests().antMatchers("/api/auth/**", "/api/auth/refreshToken/**").permitAll();
-        http.authorizeRequests().antMatchers("/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/configuration/ui", "/swagger-resources/**", "/configuration/**", "/swagger-ui.html", "/webjars/**").permitAll();
-        http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/users/**").hasAnyAuthority("User", "Admin", "Manager");
-        http.authorizeRequests().antMatchers(HttpMethod.POST, "/api/users/save/**").hasAnyAuthority("Admin");
-        http.authorizeRequests().anyRequest().authenticated();
+        http.csrf().disable()
+                .sessionManagement().sessionCreationPolicy(STATELESS).and()
+                .authorizeRequests().antMatchers("/api/auth/**", "/api/auth/refreshToken/**").permitAll()
+                .antMatchers("/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/configuration/ui", "/swagger-resources/**", "/configuration/**", "/swagger-ui.html", "/webjars/**").permitAll()
+                .antMatchers(HttpMethod.PUT,"/api/users/**").hasAuthority(Role.ADMIN.getValue())
+                .antMatchers(HttpMethod.POST,"/api/users/**").hasAuthority(Role.ADMIN.getValue())
+                .antMatchers(HttpMethod.DELETE,"/api/users/**").hasAuthority(Role.ADMIN.getValue())
+                .anyRequest().authenticated();
 
         http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
     }

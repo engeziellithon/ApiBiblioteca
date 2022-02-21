@@ -4,7 +4,7 @@ import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.repository.IUserRepository;
-import com.erp.zup.service.notifiable.NotifiableValidate;
+import com.erp.zup.api.config.jwt.notifiable.NotifiableValidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -60,8 +60,6 @@ public class UserService extends NotifiableValidate {
     
     public User findUserByEmail(String email) {
         User user = userRepo.findByEmailIgnoreCase(email);
-        if (user ==  null)
-            addNotification("User", "Usuário não encontrado");
 
         return user;
     }
@@ -86,12 +84,11 @@ public class UserService extends NotifiableValidate {
             user.EncodePassword();
 
 
-         for (int i = 0; i < user.getRoles().size(); i++){
-             Role roleDB = roleRepo.findByName(user.getRoles().get(i).getName());
-             if (roleDB != null)
-                 user.getRoles().set(i,roleDB);
-         }
-
+        for (int i = 0; i < user.getRoles().size(); i++) {
+            Role roleDB = roleRepo.findByName(user.getRoles().get(i).getName());
+            if (roleDB != null)
+                user.getRoles().set(i,roleDB);
+        }
     }
 
 

@@ -1,9 +1,11 @@
 package com.erp.zup.api.dto.user.request;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 
 @AllArgsConstructor
@@ -11,7 +13,6 @@ import javax.validation.constraints.NotNull;
 @Getter
 @Setter
 public class RoleRequestDTO {
-    @NotNull(message = "Função obrigátoria")
-    @NotEmpty(message = "Função obrigátoria")
+    @NotBlank(message = "Função obrigátoria")
     public String name;
 }

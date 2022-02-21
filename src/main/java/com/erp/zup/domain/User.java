@@ -1,17 +1,17 @@
 package com.erp.zup.domain;
 
 import jflunt.validations.Contract;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
+@Builder
 @Entity
+@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter(value = AccessLevel.PRIVATE)
@@ -24,7 +24,7 @@ public class User extends BaseEntity {
                 .isEmail(email, "email", "Necessário um email válido")
                 .isNotNull(name, "name", "Necessário informar o nome")
                 .isTrue(roles != null && !roles.isEmpty(), "roles", "Necessário informar as funções do usuário")
-                .hasMinLen(password, 6, "password", "O senha precisa ter no minimo 6 caracteres"));
+                .hasMinLen(password, 8, "password", "O senha precisa ter no minimo 8 caracteres"));
 
         this.setId(Id);
         this.name = name;
@@ -38,9 +38,11 @@ public class User extends BaseEntity {
     @Column(unique = true)
     private String email;
     private String password;
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     private List<Role> roles = new ArrayList<>();
 
+    @OneToMany( mappedBy = "user" )
+    private List<Loan> loans;
 
     public void EncodePassword() {
         setPassword(new BCryptPasswordEncoder().encode(getPassword()));

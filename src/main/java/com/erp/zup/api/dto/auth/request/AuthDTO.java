@@ -1,18 +1,20 @@
 package com.erp.zup.api.dto.auth.request;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 
 @AllArgsConstructor
 @Getter
 @Setter
 public class AuthDTO {
-    @NotEmpty(message = "Necessário um email válido")  @NotNull(message = "Necessário um email válido")  @Email(message = "Necessário um email válido")
+    @NotBlank(message = "Necessário um email válido")
+    @Email(message = "Necessário um email válido")
     public String email;
-    @NotEmpty(message = "Senha obrigátoria")   @NotNull(message = "Senha obrigátoria")
+    @NotBlank(message = "Senha obrigátoria")
     public String password;
 }

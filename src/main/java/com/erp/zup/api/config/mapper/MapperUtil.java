@@ -1,12 +1,8 @@
 package com.erp.zup.api.config.mapper;
 
-import com.erp.zup.api.dto.pagination.PaginationDTO;
-import com.erp.zup.api.dto.user.request.UserRequestDTO;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.erp.zup.api.dto.PaginationDTO;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
 import org.modelmapper.config.Configuration;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;

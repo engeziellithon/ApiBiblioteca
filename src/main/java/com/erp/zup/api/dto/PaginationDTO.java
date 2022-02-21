@@ -1,4 +1,4 @@
-package com.erp.zup.api.dto.pagination;
+package com.erp.zup.api.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,8 +1,7 @@
 package com.erp.zup.domain;
 
-import com.erp.zup.service.notifiable.NotifiableValidate;
+import com.erp.zup.api.config.jwt.notifiable.NotifiableValidate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +10,7 @@ import java.time.OffsetDateTime;
 
 @MappedSuperclass
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter
 public abstract class BaseEntity extends NotifiableValidate {
 
     @Id

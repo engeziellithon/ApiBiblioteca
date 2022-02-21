@@ -1,9 +1,9 @@
 package com.erp.zup.service.user;
 
-import com.erp.zup.domain.Role;
-import com.erp.zup.domain.User;
 import com.erp.zup.repository.IRoleRepository;
 import com.erp.zup.repository.IUserRepository;
+import com.erp.zup.domain.Role;
+import com.erp.zup.domain.User;
 import jflunt.notifications.Notification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +21,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 class UserServiceTest {
@@ -68,13 +69,15 @@ class UserServiceTest {
 
         Optional<User> response = service.findById(ID);
 
+        User user = response.get();
+
         assertNotNull(response);
-        assertEquals(User.class, response.get().getClass());
-        assertEquals(ID, response.get().getId());
-        assertEquals(NAME, response.get().getName());
-        assertEquals(EMAIL, response.get().getEmail());
+        assertEquals(User.class, user.getClass());
+        assertEquals(ID, user.getId());
+        assertEquals(NAME,user.getName());
+        assertEquals(EMAIL, user.getEmail());
         assertEquals(ROLES.stream().map(Role::getName).collect(Collectors.toList()),
-                response.get().getRoles().stream().map(Role::getName).collect(Collectors.toList()));
+                user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
     }
 
     @Test
@@ -108,6 +111,7 @@ class UserServiceTest {
 
     @Test
     void whenCreateThenReturnSuccess() {
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
         when(repository.save(any())).thenReturn(user);
 
         Optional<User> response = service.create(user);
@@ -121,7 +125,7 @@ class UserServiceTest {
 
     @Test
     void whenCreateThenReturnEmpty() {
-        when(service.findUserByEmail(any())).thenReturn(user);
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
 
         Optional<User> response = service.create(new User(100L,user.getName(),user.getEmail(),user.getPassword(),user.getRoles()));
 
@@ -134,7 +138,7 @@ class UserServiceTest {
 
     @Test
     void whenUpdateThenReturnEmpty() {
-        when(service.findUserByEmail(any())).thenReturn(user);
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
 
         Optional<User> response = service.update(new User(100L,user.getName(),user.getEmail(),user.getPassword(),user.getRoles()));
 
@@ -156,7 +160,7 @@ class UserServiceTest {
     @Test
     void whenDeleteThenReturnNotFound() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
-        
+
         service.delete(ID);
         List<Notification> Notifications = service.getNotifications();
 
@@ -166,8 +170,8 @@ class UserServiceTest {
 
     @Test
     void whenUpdateThenReturnSuccess() {
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
         when(repository.save(any())).thenReturn(user);
-        when(roleRepo.findByName(anyString())).thenReturn(ROLE);
         Optional<User> response = service.update(user);
 
         assertNotNull(response);
@@ -179,6 +183,7 @@ class UserServiceTest {
 
     @Test
     void whenUpdateThenReturnNotFound() {
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
         when(repository.save(any())).thenReturn(user);
 
         Optional<User> response = service.update(user);
@@ -192,17 +197,16 @@ class UserServiceTest {
 
     @Test
     void whenCheckUserRegisteredWithSuccess() {
-        when(repository.findById(anyLong())).thenReturn(optionalUser);
-        when(service.findUserByEmail(anyString())).thenReturn(user);
+        when(repository.findByEmailIgnoreCase(anyString())).thenReturn(user);
 
         service.checkUserRegistered(user);
         assertEquals(0, service.getNotifications().size());
     }
 
     @Test
-    void whenCheckUserRegisteredWithErrorNotFound() {
-        when(repository.findById(anyLong())).thenReturn(optionalUser);
-        when(service.findUserByEmail(anyString())).thenReturn(user);
+    void whenCheckUserRegisteredWithErrorDuplicateUser() {
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
+        when(roleRepo.findByName(anyString())).thenReturn(ROLE);
 
         service.checkUserRegistered(new User(null, user.getName(),user.getEmail(),user.getPassword(),user.getRoles()));
 
@@ -213,9 +217,8 @@ class UserServiceTest {
     }
 
     @Test
-    void whenCheckUserRegisteredPassNotPassworWithReturnSucess() {
-        when(repository.findById(anyLong())).thenReturn(optionalUser);
-        when(service.findUserByEmail(anyString())).thenReturn(user);
+    void whenCheckUserRegisteredPassNotPasswordWithReturnSuccess() {
+        when(repository.findByEmailIgnoreCase(user.getEmail())).thenReturn(user);
 
         service.checkUserRegistered(new User(user.getId(), user.getName(),user.getEmail(),null,user.getRoles()));
         assertEquals(0, service.getNotifications().size());

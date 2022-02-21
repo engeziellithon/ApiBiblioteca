@@ -1,7 +1,7 @@
 package com.erp.zup.api.controller;
 
 import com.erp.zup.api.config.mapper.MapperUtil;
-import com.erp.zup.api.dto.pagination.PaginationDTO;
+import com.erp.zup.api.dto.PaginationDTO;
 import com.erp.zup.api.dto.user.request.RoleRequestDTO;
 import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
@@ -72,18 +72,17 @@ class UserControllerTest {
     @Test
     void whenFindByIdThenReturnSuccess() {
         when(service.findById(any())).thenReturn(Optional.of(user));
-        when(mapper.map(any(), any())).thenReturn(userDTO);
+        when(mapper.map(any(), any())).thenReturn(userResponseDTO);
 
-        ResponseEntity<UserRequestDTO> response = controller.findById(ID);
+        ResponseEntity<UserResponseDTO> response = controller.findById(ID);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(ResponseEntity.class, response.getClass());
-        assertEquals(UserRequestDTO.class, response.getBody().getClass());
+        assertEquals(UserResponseDTO.class, response.getBody().getClass());
 
         assertEquals(NAME, response.getBody().getName());
         assertEquals(EMAIL, response.getBody().getEmail());
-        assertEquals(PASSWORD, response.getBody().getPassword());
         assertEquals(0, service.getNotifications().size());
     }
 
@@ -125,15 +124,15 @@ class UserControllerTest {
     @Test
     void whenUpdateThenReturnSuccess() {
         when(service.update(any())).thenReturn(Optional.of(user));
-        when(mapper.map(any(), any())).thenReturn(userDTO);
+        when(mapper.map(any(), any())).thenReturn(userResponseDTO);
 
-        ResponseEntity<UserRequestDTO> response = controller.update(ID, userUpdateRequestDTO);
+        ResponseEntity<UserResponseDTO> response = controller.update(ID, userUpdateRequestDTO);
 
         assertNotNull(response);
         assertNotNull(response.getBody());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(ResponseEntity.class, response.getClass());
-        assertEquals(UserRequestDTO.class, response.getBody().getClass());
+        assertEquals(UserResponseDTO.class, response.getBody().getClass());
         assertEquals(NAME, response.getBody().getName());
         assertEquals(EMAIL, response.getBody().getEmail());
     }

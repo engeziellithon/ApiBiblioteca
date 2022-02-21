@@ -1,5 +1,6 @@
 package com.erp.zup.api.controller;
 
+import com.auth0.jwt.JWT;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
@@ -119,7 +120,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("AUTHORIZATION","Bearer " + Token);
 
-        when(authService.DecodedToken(anyString())).thenReturn(user.getEmail());
+        when(authService.DecodedToken(anyString())).thenReturn(JWT.decode(Token));
         when(service.findUserByEmail(anyString())).thenReturn(user);
         when(authService.GenerateToken(anyString(),any(),any(),any())).thenReturn(authResponseDTO);
 

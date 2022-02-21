@@ -1,10 +1,11 @@
 package com.erp.zup.api.controller;
 
 import com.erp.zup.api.config.mapper.MapperUtil;
-import com.erp.zup.api.dto.pagination.PaginationDTO;
+import com.erp.zup.api.dto.PaginationDTO;
 import com.erp.zup.api.dto.user.request.UserRequestDTO;
 import com.erp.zup.api.dto.user.request.UserUpdateRequestDTO;
 import com.erp.zup.api.dto.user.response.UserPaginationResponseDTO;
+import com.erp.zup.api.dto.user.response.UserResponseDTO;
 import com.erp.zup.domain.Role;
 import com.erp.zup.domain.User;
 import com.erp.zup.service.user.UserService;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jflunt.notifications.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +31,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @Tag(name = "User", description = "Authenticate user and update token")
 public class UserController {
 
@@ -43,20 +45,24 @@ public class UserController {
 
     private static final String ID = "/{id}";
 
+    @Operation(summary = "Get user by id", responses = {
+            @ApiResponse(description = "Successful Operation", responseCode = "200",content = @Content(schema = @Schema(implementation = UserPaginationResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content)
+    })
     @GetMapping(value = ID)
     public ResponseEntity findById(@Valid @PathVariable Long id) {
         Optional<User> user = service.findById(id);
         if(service.isInvalid())
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(service.getNotifications());
 
-        return ResponseEntity.ok().body(mapper.map(user.get(), UserRequestDTO.class));
+        return ResponseEntity.ok().body(mapper.map(user.get(), UserResponseDTO.class));
     }
 
 
     @Operation(summary = "Get all user by filter", responses = {
             @ApiResponse(description = "Successful Operation", responseCode = "200",content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserPaginationResponseDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content),
             @ApiResponse(responseCode = "401", description = "Authentication Failure", content = @Content)
     })
     @GetMapping
@@ -73,6 +79,12 @@ public class UserController {
         return ResponseEntity.ok().body(mapper.mapToGenericPagination(listUsers,UserPaginationResponseDTO.class));
     }
 
+
+    @Operation(summary = "Save new user", responses = {
+            @ApiResponse(description = "Successful create and header location", responseCode = "201"),
+            @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping
     public ResponseEntity create(@RequestBody @Valid UserRequestDTO obj) {
         Optional<User> user = service.create(mapper.map(obj, User.class));
@@ -86,6 +98,11 @@ public class UserController {
         return ResponseEntity.created(uri).build();
     }
 
+    @Operation(summary = "Update user", responses = {
+            @ApiResponse(description = "Successful", responseCode = "200"),
+            @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PutMapping(value = ID)
     public ResponseEntity update(@Valid @PathVariable Long id,@RequestBody @Valid UserUpdateRequestDTO obj) {
 
@@ -95,9 +112,14 @@ public class UserController {
         if (service.isInvalid())
             return ResponseEntity.badRequest().body(service.getNotifications());
 
-        return ResponseEntity.ok().body(mapper.map(userUpdated.get(), UserRequestDTO.class));
+        return ResponseEntity.ok().body(mapper.map(userUpdated.get(), UserResponseDTO.class));
     }
 
+    @Operation(summary = "Delete user", responses = {
+            @ApiResponse(description = "Successful", responseCode = "204"),
+            @ApiResponse(responseCode = "404", description = "NOT_FOUND", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @DeleteMapping(value = ID)
     public ResponseEntity delete(@Valid @PathVariable Long id) {
         service.delete(id);

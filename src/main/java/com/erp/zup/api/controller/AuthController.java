@@ -1,5 +1,6 @@
 package com.erp.zup.api.controller;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
 import com.erp.zup.domain.Role;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -42,7 +44,7 @@ public class AuthController {
     @Operation(summary = "Get all user by filter", responses = {
             @ApiResponse(description = "Successful Operation", responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthResponseDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
-            @ApiResponse(responseCode = "400", description = "Authentication Failure", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class))))
+            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class))))
     })
     @PostMapping
     public ResponseEntity auth(@RequestBody @Valid AuthDTO auth) {
@@ -68,8 +70,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(List.of(new Notification("AUTHORIZATION", "O token não foi enviada no cabeçalho")));
 
         String token = authorizationHeader.substring("Bearer ".length());
-        String email = authService.DecodedToken(token);
-        User user = userService.findUserByEmail(email);
+        DecodedJWT decodedJWT = authService.DecodedToken(token);
+        User user = userService.findUserByEmail(Optional.ofNullable(decodedJWT).map(i->i.getSubject()).orElse(null));
 
         if (user == null || authService.isInvalid())
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(List.of(new Notification("AUTHORIZATION", "Dados de autenticação incorretos ou o token expirou")));
