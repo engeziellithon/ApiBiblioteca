@@ -3,7 +3,6 @@ package com.erp.zup.service.book;
 import com.erp.zup.domain.Book;
 import com.erp.zup.repository.IBookRepository;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,7 +41,6 @@ public class BookServiceTest {
 
 
     @Test
-    @DisplayName("Deve salvar um livro")
     public void saveBookTest() {
         //cenario
         Book book = createValidBook("As aventuras","Fulano","123");
@@ -61,7 +59,6 @@ public class BookServiceTest {
 
 
     @Test
-    @DisplayName("Deve lançar erro de negocio ao tentar salvar um livro com isbn duplicado")
     public void shouldNotSaveABookWithDuplicatedISBN(){
         //cenario
         Book book = createValidBook("As aventuras","Fulano","123");
@@ -80,7 +77,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve obter um livro por Id")
     public void getByIdTest(){
         Long id = 1l;
         Book book = createValidBook("As aventuras","Fulano","123");
@@ -100,7 +96,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve retornar vazio ao obter um livro por Id quando ele não existe na base.")
     public void bookNotFoundByIdTest(){
         Long id = 1l;
         when( repository.findById(id) ).thenReturn(Optional.empty());
@@ -114,7 +109,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve deletar um livro.")
     public void deleteBookTest(){
         Book book = createValidBook("As aventuras","Fulano","123");
 
@@ -126,7 +120,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve ocorrer erro ao tentar deletar um livro inexistente.")
     public void deleteInvalidBookTest(){
         Book book = new Book();
 
@@ -136,7 +129,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve ocorrer erro ao tentar atualizar um livro inexistente.")
     public void updateInvalidBookTest(){
         Book book = new Book();
 
@@ -146,7 +138,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve atualizar um livro.")
     public void updateBookTest(){
         //cenário
         long id = 1l;
@@ -171,7 +162,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve filtrar livros pelas propriedades")
     public void findBookTest(){
         //cenario
         Book book = createValidBook("As aventuras","Fulano","123");
@@ -195,7 +185,6 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("deve obter um livro pelo isbn")
     public void getBookByIsbnTest(){
         String isbn = "1230";
         when(repository.findByIsbn(isbn)).thenReturn( Optional.of(createValidBook("As aventuras","Fulano","123")) );

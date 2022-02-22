@@ -32,7 +32,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
-@Tag(name = "User", description = "Authenticate user and update token")
+@Tag(name = "User", description = "User crud and get user paginate")
 public class UserController {
 
     @Autowired

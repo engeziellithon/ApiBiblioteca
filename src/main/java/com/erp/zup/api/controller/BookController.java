@@ -10,6 +10,7 @@ import com.erp.zup.domain.Loan;
 import com.erp.zup.service.book.BookService;
 import com.erp.zup.service.loan.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RestController
+@RequestMapping("/api/book")
+@Tag(name = "Book", description = "Book crud")
 public class BookController {
     
     @Autowired

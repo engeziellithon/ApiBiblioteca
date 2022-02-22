@@ -11,6 +11,7 @@ import com.erp.zup.domain.User;
 import com.erp.zup.service.book.BookService;
 import com.erp.zup.service.loan.LoanService;
 import com.erp.zup.service.user.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -26,6 +27,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@RestController
+@RequestMapping("/api/loan")
+@Tag(name = "Loan", description = "Loan")
 public class LoanController {
 
     @Autowired
