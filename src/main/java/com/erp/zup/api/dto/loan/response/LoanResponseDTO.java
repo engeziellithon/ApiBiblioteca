@@ -1,10 +1,12 @@
 package com.erp.zup.api.dto.loan.response;
 
-import com.erp.zup.api.dto.book.request.BookRequestDTO;
+import com.erp.zup.api.dto.book.response.BookResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -12,7 +14,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class LoanResponseDTO {
     private Long Id;
-    private String isbn;
     private Long userId;
-    private BookRequestDTO book;
+    private Boolean returned;
+    private LocalDate loanDate;
+    private BookResponseDTO book;
 }

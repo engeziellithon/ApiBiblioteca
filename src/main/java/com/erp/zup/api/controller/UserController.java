@@ -63,25 +63,24 @@ public class UserController {
     @Operation(summary = "Get all user by filter", responses = {
             @ApiResponse(description = "Successful Operation", responseCode = "200",content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserPaginationResponseDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication Failure", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Authentication Failure", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content)
     })
     @GetMapping
     public ResponseEntity findAll(@Valid @RequestParam(name = "page", required = false, defaultValue = "0") int page,
                                   @Valid @RequestParam(name = "size", required = false, defaultValue = "20") int size) {
 
-        PageRequest pageRequest = PageRequest.of(page > 0 ? page : 0,size > 0 ? size : 0,Sort.by("name"));
+        PageRequest pageRequest = PageRequest.of(page > 0 ? page : 0,size > 0 ? size : 0,Sort.by("id"));
 
         Page<User> listUsers = service.findAll(pageRequest);
-
-        if (listUsers.getSize() == 0)
-            return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok().body(mapper.mapToGenericPagination(listUsers,UserPaginationResponseDTO.class));
     }
 
 
     @Operation(summary = "Save new user", responses = {
-            @ApiResponse(description = "Successful create and header location", responseCode = "201"),
+            @ApiResponse(description = "Successful create and header location", responseCode = "201", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content),
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -99,7 +98,8 @@ public class UserController {
     }
 
     @Operation(summary = "Update user", responses = {
-            @ApiResponse(description = "Successful", responseCode = "200"),
+            @ApiResponse(description = "Successful", responseCode = "200",content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserResponseDTO.class)))),
+            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content),
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -116,7 +116,8 @@ public class UserController {
     }
 
     @Operation(summary = "Delete user", responses = {
-            @ApiResponse(description = "Successful", responseCode = "204"),
+            @ApiResponse(description = "No Content success", responseCode = "204",content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content),
             @ApiResponse(responseCode = "404", description = "NOT_FOUND", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })

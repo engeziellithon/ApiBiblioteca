@@ -1,261 +1,284 @@
 package com.erp.zup.api.controller;
 
+import com.erp.zup.api.config.mapper.MapperUtil;
+import com.erp.zup.api.dto.PaginationDTO;
 import com.erp.zup.api.dto.book.request.BookRequestDTO;
+import com.erp.zup.api.dto.book.response.BookResponseDTO;
+import com.erp.zup.api.dto.loan.response.LoanResponseDTO;
 import com.erp.zup.domain.Book;
+import com.erp.zup.domain.Loan;
+import com.erp.zup.domain.User;
 import com.erp.zup.service.book.BookService;
 import com.erp.zup.service.loan.LoanService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.DisplayName;
+import com.erp.zup.service.user.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
-@ActiveProfiles("test")
-@WebMvcTest(controllers = BookController.class)
+
+@SpringBootTest
 @AutoConfigureMockMvc
 public class BookControllerTest {
 
-    static String BOOK_API = "/api/books";
+    @InjectMocks
+    private BookController controller;
 
-    @Autowired
-    MockMvc mvc;
+    @Mock
+    private UserService userService;
 
-    @MockBean
-    BookService service;
+    @Mock
+    private BookService bookService;
 
-    @MockBean
-    LoanService loanService;
+    @Mock
+    private LoanService loanService;
 
-    @Test
-    public void createBookTest() throws Exception {
+    @Mock
+    private MapperUtil mapper;
 
-        Book dto = createNewBook();
-        Book savedBook = createNewBook();
+    private static final Long ID = 1L;
+    private static final String TITLE = "title";
+    private static final String AUTHOR = "author";
+    private static final String ISBN = "isbn";
+    
+    private User user;
+    private Book book;
+    private Loan loan;
+    private BookRequestDTO bookRequestDTO;
+    private BookResponseDTO bookResponseDTO;
+    private static final Integer PaginationValue = 1;
 
-        BDDMockito.given(service.save(Mockito.any(Book.class))).willReturn(savedBook);
-        String json = new ObjectMapper().writeValueAsString(dto);
+    private void start() {
+        user = new User(ID,"name","user@user.com","1223",null);
+        book = new Book(ID, TITLE,AUTHOR,ISBN, null);
+        loan = new Loan(user,book, LocalDate.now(),true);
+        bookRequestDTO = new BookRequestDTO(TITLE,AUTHOR,ISBN);
+        bookResponseDTO = new BookResponseDTO(ID,TITLE,AUTHOR,ISBN);
+        loan.setId(ID);
+    }
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post(BOOK_API)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json);
-
-        mvc
-                .perform(request)
-                .andExpect( status().isCreated() )
-                .andExpect( jsonPath("id").value(10l) )
-                .andExpect( jsonPath("title").value(dto.getTitle()) )
-                .andExpect( jsonPath("author").value(dto.getAuthor()) )
-                .andExpect( jsonPath("isbn").value(dto.getIsbn()) )
-
-        ;
-
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        MockMvcBuilders.standaloneSetup(controller).build();
+        start();
     }
 
     @Test
-    public void createInvalidBookTest() throws Exception {
-
-        String json = new ObjectMapper().writeValueAsString(new BookRequestDTO());
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post(BOOK_API)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json);
-
-        mvc.perform(request)
-                .andExpect( status().isBadRequest() )
-                .andExpect( jsonPath("errors", hasSize(3)));
-    }
-
-    @Test
-
-    public void createBookWithDuplicatedIsbn() throws Exception {
-
-        Book dto = createNewBook();
-        String json = new ObjectMapper().writeValueAsString(dto);
-        String mensagemErro = "Isbn já cadastrado.";
-        BDDMockito.given(service.save(Mockito.any(Book.class)))
-                .willThrow(new IllegalArgumentException(mensagemErro));
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post(BOOK_API)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json);
-
-        mvc.perform( request )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("errors", hasSize(1)))
-                .andExpect(jsonPath("errors[0]").value(mensagemErro));
-
-    }
-
-    @Test
-    @DisplayName("Deve obter informacoes de um livro.")
-    public void getBookDetailsTest() throws Exception{
-        //cenario (given)
-        Long id = 1l;
+    public void createBook() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         Book book = createNewBook();
+        when(mapper.map(any(),any())).thenReturn(book);
+        when(bookService.getBookByIsbn(any())).thenReturn(Optional.of(book));
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(bookService.save(any())).thenReturn(book);
 
-        BDDMockito.given( service.getById(id) ).willReturn(Optional.of(book));
+        ResponseEntity response = controller.create(bookRequestDTO);
 
-        //execucao (when)
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get(BOOK_API.concat("/" + id))
-                .accept(MediaType.APPLICATION_JSON);
-
-        mvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andExpect( jsonPath("id").value(id) )
-                .andExpect( jsonPath("title").value(createNewBook().getTitle()) )
-                .andExpect( jsonPath("author").value(createNewBook().getAuthor()) )
-                .andExpect( jsonPath("isbn").value(createNewBook().getIsbn()) )
-        ;
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.CREATED.value(), response.getStatusCode().value());
     }
 
     @Test
-    public void bookNotFoundTest() throws Exception {
-
-        BDDMockito.given( service.getById(Mockito.anyLong())).willReturn( Optional.empty() );
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get(BOOK_API.concat("/" + 1))
-                .accept(MediaType.APPLICATION_JSON);
-
-        mvc
-                .perform(request)
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void deleteBookTest() throws Exception {
-
-        BDDMockito.given(service.getById(anyLong())).willReturn(Optional.of(createNewBook()));
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete(BOOK_API.concat("/" + 1));
-
-        mvc.perform( request )
-                .andExpect( status().isNoContent() );
-    }
-
-    @Test
-    public void deleteInexistentBookTest() throws Exception {
-
-        BDDMockito.given(service.getById(anyLong())).willReturn(Optional.empty());
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete(BOOK_API.concat("/" + 1));
-
-        mvc.perform( request )
-                .andExpect( status().isNotFound() );
-    }
-
-    @Test
-    public void updateBookTest() throws Exception {
-        Long id = 1l;
-        String json = new ObjectMapper().writeValueAsString(createNewBook());
-
-        Book updatingBook = createNewBook();
-        BDDMockito.given( service.getById(id) ).willReturn( Optional.of(updatingBook) );
-        Book updatedBook = updateNewBook("As aventuras","Artur","321");
-        BDDMockito.given(service.update(updatingBook)).willReturn(updatedBook);
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .put(BOOK_API.concat("/" + 1))
-                .content(json)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON);
-
-        mvc.perform( request )
-                .andExpect( status().isOk() )
-                .andExpect( jsonPath("id").value(id) )
-                .andExpect( jsonPath("title").value(createNewBook().getTitle()) )
-                .andExpect( jsonPath("author").value(createNewBook().getAuthor()) )
-                .andExpect( jsonPath("isbn").value("321") );
-    }
-
-    @Test
-    public void updateInexistentBookTest() throws Exception {
-
-        String json = new ObjectMapper().writeValueAsString(createNewBook());
-        BDDMockito.given( service.getById(Mockito.anyLong()) )
-                .willReturn( Optional.empty() );
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .put(BOOK_API.concat("/" + 1))
-                .content(json)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON);
-
-        mvc.perform( request )
-                .andExpect( status().isNotFound() );
-    }
-
-    @Test
-    public void findBooksTest() throws Exception{
-
-        Long id = 1l;
+    public void createInvalidBook() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         Book book = createNewBook();
+        when(mapper.map(any(),any())).thenReturn(book);
+        when(bookService.save(any())).thenReturn(null);
 
-        BDDMockito.given( service.find(Mockito.any(Book.class), Mockito.any(Pageable.class)) )
-                .willReturn( new PageImpl<Book>( Arrays.asList(book), PageRequest.of(0,100), 1 )   );
+        ResponseEntity response = controller.create(bookRequestDTO);
 
-        String queryString = String.format("?title=%s&author=%s&page=0&size=100",
-                book.getTitle(), book.getAuthor());
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatusCode().value());
+    }
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get(BOOK_API.concat(queryString))
-                .accept(MediaType.APPLICATION_JSON);
+    @Test
+    public void getBookDetails() {
+        Book book = createNewBook();
+        when(bookService.getById(any())).thenReturn(Optional.of(book));
+        when(mapper.map(any(),any())).thenReturn(bookResponseDTO);
 
-        mvc
-                .perform( request )
-                .andExpect( status().isOk() )
-                .andExpect( jsonPath("content", Matchers.hasSize(1)))
-                .andExpect( jsonPath("totalElements").value(1) )
-                .andExpect( jsonPath("pageable.pageSize").value(100) )
-                .andExpect( jsonPath("pageable.pageNumber").value(0))
-        ;
+        ResponseEntity<BookResponseDTO> response = controller.get(book.getId());
+
+        assertNotNull(response);
+        assertNotNull(response.getBody());
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertEquals(book.getId(), response.getBody().getId());
+        assertEquals(book.getTitle(), response.getBody().getTitle());
+        assertEquals(book.getAuthor(), response.getBody().getAuthor());
+        assertEquals(book.getIsbn(), response.getBody().getIsbn());
+    }
+
+    @Test
+    public void bookNotFound()  {
+        Book book = createNewBook();
+        when(bookService.getById(any())).thenReturn(Optional.empty());
+        when(mapper.map(any(),any())).thenReturn(bookResponseDTO);
+
+        ResponseEntity response = controller.get(book.getId());
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void deleteBook()  {
+        Book book = createNewBook();
+        when(bookService.getById(any())).thenReturn(Optional.of(book));
+
+        ResponseEntity response = controller.delete(book.getId());
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NO_CONTENT.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void deleteNonExistentBook()  {
+        Book book = createNewBook();
+        when(bookService.getById(any())).thenReturn(Optional.empty());
+
+        ResponseEntity response = controller.delete(book.getId());
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void updateBook()  {
+        when(bookService.getById(any())).thenReturn(Optional.of(book));
+        when(bookService.update(any())).thenReturn(book);
+        when(mapper.map(any(),any())).thenReturn(bookResponseDTO);
+
+        ResponseEntity<BookResponseDTO> response = controller.update(ID,bookRequestDTO);
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertEquals(book.getId(), response.getBody().getId());
+        assertEquals(book.getIsbn(), response.getBody().getIsbn());
+        assertEquals(book.getTitle(), response.getBody().getTitle());
+        assertEquals(book.getAuthor(), response.getBody().getAuthor());
+    }
+
+    @Test
+    public void updateNonExistentBook()  {
+        when(bookService.getById(any())).thenReturn(Optional.empty());
+
+        ResponseEntity response = controller.update(ID,bookRequestDTO);
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void updateBadRequestBook()  {
+        when(bookService.getById(any())).thenReturn(Optional.of(book));
+        when(bookService.update(any())).thenReturn(null);
+        when(mapper.map(any(),any())).thenReturn(bookResponseDTO);
+
+        ResponseEntity response = controller.update(ID,bookRequestDTO);
+
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void findBooks() {
+        Book book = createNewBook();
+        when(mapper.map(any(),any())).thenReturn(book);
+        when(bookService.find(any(),any())).thenReturn(new PageImpl<>(List.of(book)));
+        when(mapper.mapToGenericPagination(any(), any())).thenReturn(new PaginationDTO<>(PaginationValue, PaginationValue, PaginationValue,PaginationValue, List.of(book)));
+
+        ResponseEntity<PaginationDTO<BookResponseDTO>> response = controller.find(Mockito.any(BookRequestDTO.class),Mockito.any(Pageable.class));
+
+
+        assertNotNull(response);
+        assertNotNull(response.getBody());
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(PaginationValue, response.getBody().getNumber());
+        assertEquals(PaginationValue, response.getBody().getSize());
+        assertEquals(PaginationValue, response.getBody().getTotalPages());
+        assertEquals(PaginationValue, response.getBody().getTotalElements());
+        assertTrue(response.getBody().getContent().size() == 1);
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void loansByBook() {
+        Book book = createNewBook();
+        when(bookService.getById(any())).thenReturn(Optional.of(book));
+        when(loanService.getLoansByBook(any(),any())).thenReturn(new PageImpl<>(List.of(loan)));
+        when(mapper.mapToGenericPagination(any(), any())).thenReturn(new PaginationDTO<>(PaginationValue, PaginationValue, PaginationValue,PaginationValue, List.of(loan)));
+
+        ResponseEntity<PaginationDTO<LoanResponseDTO>> response = controller.loansByBook(book.getId(),1,1);
+
+
+        assertNotNull(response);
+        assertNotNull(response.getBody());
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(PaginationValue, response.getBody().getNumber());
+        assertEquals(PaginationValue, response.getBody().getSize());
+        assertEquals(PaginationValue, response.getBody().getTotalPages());
+        assertEquals(PaginationValue, response.getBody().getTotalElements());
+        assertTrue(response.getBody().getContent().size() == 1);
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+    }
+
+    @Test
+    public void loansByBookNotFound() {
+        Book book = createNewBook();
+        when(bookService.getById(any())).thenReturn(Optional.empty());
+
+        ResponseEntity response = controller.loansByBook(book.getId(),1,1);
+
+
+        assertNotNull(response);
+        assertEquals(ResponseEntity.class, response.getClass());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
     }
 
     private Book createNewBook() {
-        Book book = new Book("title","author","isbn", new ArrayList<>());
-        book.setId(1L);
+        Book book = new Book(TITLE,AUTHOR,ISBN, new ArrayList<>());
+        book.setId(ID);
         return book;
     }
     private Book updateNewBook(String title,String author,String isbn) {
         Book book = new Book(title,author,isbn, new ArrayList<>());
-        book.setId(1L);
+        book.setId(ID);
         return book;
     }
 }

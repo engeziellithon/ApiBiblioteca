@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -26,8 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+@SpringBootTest
 class AuthControllerTest {
     private static final Long ID         = 1L;
     private static final String NAME     = "user";
@@ -65,7 +67,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void whenAuthThenReturnSuccess() {
+    void whenAuthWithCorrectDataThenReturnSuccess() {
         user.EncodePassword();
         when(service.findUserByEmail(anyString())).thenReturn(user);
         when(authService.GenerateToken(anyString(), any(),anyString(),anyString())).thenReturn(authResponseDTO);
@@ -80,9 +82,12 @@ class AuthControllerTest {
         assertEquals(Token, response.getBody().accessToken);
         assertEquals(Token, response.getBody().refreshToken);
         assertThat(Token,containsString(""));
+
+        verify(authService, times(1)).GenerateToken(any(),any(),any(),any());
     }
 
     @Test
+
     void whenAuthWithIncorrectPasswordThenReturnNotFound() {
         when(service.findUserByEmail(anyString())).thenReturn(null);
         when(authService.GenerateToken(anyString(), any(), any(), any())).thenReturn(authResponseDTO);
@@ -94,6 +99,7 @@ class AuthControllerTest {
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
         assertEquals("User", response.getBody().get(0).getProperty());
         assertEquals("Usuário não encontrado ou senha incorreta", response.getBody().get(0).getMessage());
+        verify(authService, times(0)).GenerateToken(any(),any(),any(),any());
     }
 
     @Test
@@ -111,6 +117,7 @@ class AuthControllerTest {
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatusCode().value());
         assertEquals("User", response.getBody().get(0).getProperty());
         assertEquals("Usuário não encontrado ou senha incorreta", response.getBody().get(0).getMessage());
+        verify(authService, times(0)).GenerateToken(any(),any(),any(),any());
     }
 
 
@@ -133,6 +140,7 @@ class AuthControllerTest {
         assertEquals(Token, response.getBody().accessToken);
         assertEquals(Token, response.getBody().refreshToken);
         assertThat(Token,containsString(""));
+        verify(authService, times(1)).GenerateToken(any(),any(),any(),any());
     }
 
     @Test
@@ -152,6 +160,7 @@ class AuthControllerTest {
         assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatusCode().value());
         assertEquals("AUTHORIZATION", response.getBody().get(0).getProperty());
         assertEquals("Dados de autenticação incorretos ou o token expirou", response.getBody().get(0).getMessage());
+        verify(authService, times(0)).GenerateToken(any(),any(),any(),any());
     }
 
     @Test
@@ -170,5 +179,6 @@ class AuthControllerTest {
         assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatusCode().value());
         assertEquals("AUTHORIZATION", response.getBody().get(0).getProperty());
         assertEquals("O token não foi enviada no cabeçalho", response.getBody().get(0).getMessage());
+        verify(authService, times(0)).GenerateToken(any(),any(),any(),any());
     }
 }

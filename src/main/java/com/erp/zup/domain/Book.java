@@ -1,9 +1,6 @@
 package com.erp.zup.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,13 +8,22 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.List;
 
-@Data
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
 @Entity
+@Getter
+@Setter
 @Table
 public class Book extends BaseEntity {
+
+    public Book(Long id, String title, String author, String isbn, List<Loan> loans) {
+        this.setId(id);
+        this.title = title;
+        this.author = author;
+        this.isbn = isbn;
+        this.loans = loans;
+    }
 
     @Column
     private String title;

@@ -42,7 +42,7 @@ public class AuthController {
 
 
     @Operation(summary = "Get all user by filter", responses = {
-            @ApiResponse(description = "Successful Operation", responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthResponseDTO.class)))),
+            @ApiResponse(description = "Successful Operation", responseCode = "200", content = @Content(schema = @Schema(implementation = AuthResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
             @ApiResponse(responseCode = "403", description = "Authentication Failure", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class))))
     })
@@ -58,7 +58,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Get all user by filter", responses = {
-            @ApiResponse(description = "Successful Operation", responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthResponseDTO.class)))),
+            @ApiResponse(description = "Successful Operation", responseCode = "200", content = @Content(schema = @Schema(implementation = AuthResponseDTO.class))),
             @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Notification.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })

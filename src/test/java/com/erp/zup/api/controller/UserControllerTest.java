@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
 class UserControllerTest {
 
     private static final Long ID         = 1L;
@@ -104,7 +106,7 @@ class UserControllerTest {
         assertEquals(PaginationValue, response.getBody().getSize());
         assertEquals(PaginationValue, response.getBody().getTotalElements());
         assertEquals(PaginationValue, response.getBody().getTotalPages());
-        assertTrue(response.getBody().getContent().size() == 1);
+        assertEquals(response.getBody().getContent().size(), 1);
         assertEquals(0, service.getNotifications().size());
     }
 

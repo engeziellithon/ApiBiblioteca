@@ -6,6 +6,7 @@ import com.erp.zup.domain.Book;
 import com.erp.zup.domain.Loan;
 import com.erp.zup.domain.User;
 import com.erp.zup.repository.ILoanRepository;
+import com.erp.zup.service.email.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,26 +24,30 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 public class LoanServiceTest {
 
+    @MockBean
     LoanService service;
 
     @MockBean
     ILoanRepository repository;
 
+    @MockBean
+    EmailService emailService;
+
     @BeforeEach
     public void setUp(){
-        this.service = new LoanService(repository);
+        this.service = new LoanService(repository,emailService);
     }
 
     @Test
-    public void saveLoanTest(){
-        Book book = Book.builder().build();
+    public void saveLoan(){
+        Book book = new Book();
         book.setId(1L);
         User user = User.builder().email("user@user.com").build();
         user.setId(1L);
@@ -67,15 +72,15 @@ public class LoanServiceTest {
 
         Loan loan = service.save(savingLoan);
 
-        assertThat(loan.getId()).isEqualTo(savedLoan.getId());
-        assertThat(loan.getBook().getId()).isEqualTo(savedLoan.getBook().getId());
-        assertThat(loan.getUser()).isEqualTo(savedLoan.getUser());
-        assertThat(loan.getLoanDate()).isEqualTo(savedLoan.getLoanDate());
+        assertEquals(loan.getId(),savedLoan.getId());
+        assertEquals(loan.getBook().getId(),savedLoan.getBook().getId());
+        assertEquals(loan.getUser(),savedLoan.getUser());
+        assertEquals(loan.getLoanDate(),savedLoan.getLoanDate());
     }
 
     @Test
-    public void loanedBookSaveTest(){
-        Book book = Book.builder().build();
+    public void loanedBookSave(){
+        Book book = new Book();
         book.setId(1l);
         User user = User.builder().email("user@user.com").build();
         user.setId(1L);
@@ -89,19 +94,15 @@ public class LoanServiceTest {
 
         when(repository.existsByBookAndNotReturned(book)).thenReturn(true);
 
-        Throwable exception = catchThrowable(() -> service.save(savingLoan));
+        Loan serviceDB =  service.save(savingLoan);
 
-        assertThat(exception)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Book already loaned");
+        assertNull(serviceDB);
 
         verify(repository, never()).save(savingLoan);
-
     }
 
     @Test
-    public void getLoanDetaisTest(){
-        //cenário
+    public void getLoanDetails() {
         Long id = 1l;
 
         Loan loan = createLoan();
@@ -109,22 +110,22 @@ public class LoanServiceTest {
 
         Mockito.when( repository.findById(id) ).thenReturn(Optional.of(loan));
 
-        //execucao
+     
         Optional<Loan> result = service.getById(id);
 
-        //verificacao
-        assertThat(result.isPresent()).isTrue();
-        assertThat(result.get().getId()).isEqualTo(id);
-        assertThat(result.get().getUser()).isEqualTo(loan.getUser());
-        assertThat(result.get().getBook()).isEqualTo(loan.getBook());
-        assertThat(result.get().getLoanDate()).isEqualTo(loan.getLoanDate());
+      
+        assertTrue(result.isPresent());
+        assertEquals(result.get().getId(),id);
+        assertEquals(result.get().getUser(),loan.getUser());
+        assertEquals(result.get().getBook(),loan.getBook());
+        assertEquals(result.get().getLoanDate(),loan.getLoanDate());
 
         verify( repository ).findById(id);
 
     }
 
     @Test
-    public void updateLoanTest(){
+    public void updateLoan(){
         Loan loan = createLoan();
         loan.setId(1l);
         loan.setReturned(true);
@@ -138,44 +139,40 @@ public class LoanServiceTest {
     }
 
     @Test
-    public void findLoanTest(){
-        //cenario
+    public void findLoan(){
         LoanRequestFilterDTO loanFilterDTO = LoanRequestFilterDTO.builder().userEmail("user@user.com").isbn("321").build();
 
         Loan loan = createLoan();
-        loan.setId(1l);
         PageRequest pageRequest = PageRequest.of(0, 10);
         List<Loan> lista = Arrays.asList(loan);
 
         Page<Loan> page = new PageImpl<Loan>(lista, pageRequest, lista.size());
-        when( repository.findByBookIsbnOrUser(
-                Mockito.anyString(),
-                Mockito.anyLong(),
-                Mockito.any(PageRequest.class))
-        )
+        when(repository.findByBookIsbnOrUser(Mockito.anyString(),Mockito.anyString(),Mockito.any(PageRequest.class)))
                 .thenReturn(page);
 
-        //execucao
-        Page<Loan> result = service.find( loanFilterDTO.getIsbn(),1L, pageRequest );
+
+        Page<Loan> result = service.find( loanFilterDTO.getIsbn(),"user@user.com", pageRequest );
 
 
-        //verificacoes
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).isEqualTo(lista);
-        assertThat(result.getPageable().getPageNumber()).isEqualTo(0);
-        assertThat(result.getPageable().getPageSize()).isEqualTo(10);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(lista, result.getContent());
+        assertEquals(0, result.getPageable().getPageNumber());
+        assertEquals(10, result.getPageable().getPageSize());
     }
 
     public static Loan createLoan(){
-        Book book = Book.builder().build();
+        Book book = new Book();
         book.setId(1L);
         User user = User.builder().email("user@user.com").build();
         user.setId(1L);
 
-        return Loan.builder()
+       Loan loan = Loan.builder()
                 .book(book)
                 .user(user)
                 .loanDate(LocalDate.now())
                 .build();
+        loan.setId(1l);
+
+        return loan;
     }
 }

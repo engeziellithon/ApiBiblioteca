@@ -1,6 +1,5 @@
 package com.erp.zup.service.auth;
 
-import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.zup.api.dto.auth.request.AuthDTO;
 import com.erp.zup.api.dto.auth.response.AuthResponseDTO;
@@ -10,17 +9,14 @@ import jflunt.notifications.Notification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
 class AuthServiceTest {
     private static final Long ID         = 1L;
@@ -37,8 +33,6 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    @Mock
-    private AuthService authServiceMock;
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -53,8 +47,6 @@ class AuthServiceTest {
 
     @Test
     void whenCallGenerateTokenReturnTokenAndRefreshToken() {
-        when(authServiceMock.GenerateToken("",new ArrayList<String>(),"",null)).thenReturn(authResponseDTO);
-
         AuthResponseDTO response = authService.GenerateToken(user.getEmail(),user.getRoles().stream().map(Role::getName).collect(Collectors.toList()),"","");
 
         assertEquals(AuthResponseDTO.class, response.getClass());
@@ -68,7 +60,7 @@ class AuthServiceTest {
     @Test
     void  whenCallDecodedTokenReturnSubject() {
         AuthResponseDTO authResponse = authService.GenerateToken(user.getEmail(),user.getRoles().stream().map(Role::getName).collect(Collectors.toList()),"","");
-        when(authServiceMock.DecodedToken(authResponseDTO.accessToken)).thenReturn(JWT.decode(Token));
+        //when(authServiceMock.DecodedToken(authResponseDTO.accessToken)).thenReturn(JWT.decode(Token));
 
         DecodedJWT response = authService.DecodedToken(authResponse.accessToken);
 
@@ -87,7 +79,4 @@ class AuthServiceTest {
         assertEquals("Token", notifications.get(0).getProperty());
         assertEquals("Token expirado", notifications.get(0).getMessage());
     }
-
-
-
 }

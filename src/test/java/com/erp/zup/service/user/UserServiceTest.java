@@ -166,6 +166,7 @@ class UserServiceTest {
 
         assertEquals("User", Notifications.get(0).getProperty());
         assertEquals("Usuário não encontrado", Notifications.get(0).getMessage());
+        verify(repository, times(0)).deleteById(anyLong());
     }
 
     @Test

@@ -1,10 +1,9 @@
 package com.erp.zup.api.dto.loan.request;
 
-import com.erp.zup.api.dto.book.request.BookRequestDTO;
 import lombok.*;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter
@@ -15,7 +14,6 @@ public class LoanDTO {
     @NotBlank(message = "Campo obrigátorio")
     private String isbn;
     @NotBlank(message = "Campo obrigátorio")
+    @Email(message = "Necessário um email válido")
     private String userEmail;
-    @NotNull
-    private BookRequestDTO book;
 }

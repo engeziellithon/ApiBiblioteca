@@ -8,7 +8,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookResponseDTO {
-    private String title;
-    private String author;
-    private String isbn;
+    public Long id;
+    public String title;
+    public String author;
+    public String isbn;
 }

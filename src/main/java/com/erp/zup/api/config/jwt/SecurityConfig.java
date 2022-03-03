@@ -3,6 +3,7 @@ package com.erp.zup.api.config.jwt;
 
 import com.erp.zup.api.enums.Role;
 import com.erp.zup.domain.User;
+import com.erp.zup.service.auth.AuthService;
 import com.erp.zup.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuthService authService;
+
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     private final UserDetailsService userDetailsService = new UserDetailsService() {
@@ -69,7 +73,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.DELETE,"/api/users/**").hasAuthority(Role.ADMIN.getValue())
                 .anyRequest().authenticated();
 
-        http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new CustomAuthorizationFilter(authService), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean

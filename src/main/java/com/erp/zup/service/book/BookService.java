@@ -1,8 +1,10 @@
 package com.erp.zup.service.book;
 
+import com.erp.zup.api.config.notifiable.NotifiableValidate;
+import com.erp.zup.domain.BaseEntity;
 import com.erp.zup.domain.Book;
 import com.erp.zup.repository.IBookRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import jflunt.notifications.Notification;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
@@ -12,16 +14,20 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class BookService implements IBookService {
-    @Autowired
-    IBookRepository repository;
+public class BookService extends NotifiableValidate implements IBookService {
+    private final IBookRepository repository;
 
+    public BookService(IBookRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public Book save(Book book) {
-        if( repository.existsByIsbn(book.getIsbn()) ){
-            throw new IllegalArgumentException("Isbn já cadastrado.");
+        if(repository.existsByIsbn(book.getIsbn())){
+            addNotification(new Notification("Isbn","Isbn já cadastrado."));
+            return null;
         }
+
         return repository.save(book);
     }
 
@@ -32,17 +38,18 @@ public class BookService implements IBookService {
 
     @Override
     public void delete(Book book) {
-        if(book == null || book.getId() == null){
-            throw new IllegalArgumentException("Book id cant be null.");
-        }
-        this.repository.delete(book);
+        if(Optional.ofNullable(book).map(BaseEntity::getId).orElse(null) != null)
+            this.repository.delete(book);
     }
 
     @Override
     public Book update(Book book) {
-        if(book == null || book.getId() == null){
-            throw new IllegalArgumentException("Book id cant be null.");
+        Optional<Book> bookCheck = repository.findByIsbn(book.getIsbn());
+        if(bookCheck.isPresent() && !bookCheck.get().getId().equals(book.getId())){
+            addNotification(new Notification("Isbn","Isbn já cadastrado."));
+            return null;
         }
+
         return this.repository.save(book);
     }
 
