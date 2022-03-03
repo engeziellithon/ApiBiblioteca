@@ -71,7 +71,7 @@ public class LoanService extends NotifiableValidate implements ILoanService {
 
     //0 * * ? * ? - 1 EM 1 MINUTE
     //40 27 14 1/1 * ? - 14:27:40
-    @Scheduled(cron = "30 08 10 1/1 * ?")
+    @Scheduled(cron = "30 30 10 1/1 * ?")
     public void sendEmailToLateLoans() {
         final Integer loanDays = Integer.parseInt(loanDaysDefault);
         LocalDate days = LocalDate.now().minusDays(loanDays);

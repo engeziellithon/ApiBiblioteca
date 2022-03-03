@@ -35,7 +35,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/books")
-@Tag(name = "Book", description = "Book crud")
+@Tag(name = "Book", description = "Book")
 public class BookController {
     
     @Autowired
